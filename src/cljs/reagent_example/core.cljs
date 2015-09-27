@@ -6,35 +6,43 @@
               [reagent-example.util :as util :refer [make-marine
                                                      make-command-centre
                                                      gen-id
-                                                     make-map]]
+                                                     make-map
+                                                     select-spawn-point]]
               [goog.history.EventType :as EventType])
     (:import goog.History))
+
+(def ^:const marine-cost 10)
 
 (def app-state (atom {:resources {:minerals 100}
                       :entities {}
                       :selected #{}
                       :user "ed"
                       :map (make-map)}))
-(def app-state-resources (cursor app-state [:resources]))
-(def app-state-minerals (cursor app-state-resources [:minerals]))
+(def app-state-minerals (cursor app-state [:resources :minerals]))
 (def app-state-entities (cursor app-state [:entities]))
 (def app-state-selected (cursor app-state [:selected]))
 (def app-state-user (cursor app-state [:user]))
 (def app-state-map (cursor app-state [:map]))
-(def tile-size 32)
+(def tile-size 64)
+
+(defn swap-in! [where path f]
+  (swap! where #(update-in % path f)))
+
+(defn reset-in! [where path v]
+  (swap-in! where path (fn [x] v)))
 
 (defn add-entity [id e]
-  (swap! app-state (fn [state] (update-in state [:entities] #(assoc % id e)))))
+  (swap-in! app-state [:entities] #(assoc % id e)))
 
 (defn deselect [entity]
-  (swap! app-state #(update-in % [:entities entity :selected] (fn [a] false)))
-  (swap! app-state #(update-in % [:selected] (fn [s] (disj s entity)))))
+  (reset-in! app-state [:entities entity :selected] false)
+  (swap-in! app-state [:selected] #(disj % entity)))
 
 (defn select [entity]
   (doseq [e @app-state-selected]
     (deselect e))
-  (swap! app-state #(update-in % [:entities entity :selected] (fn [a] true)))
-  (swap! app-state #(update-in % [:selected] (fn [s] (conj s entity)))))
+  (reset-in! app-state [:entities entity :selected] true)
+  (swap-in! app-state [:selected] #(conj % entity)))
 
 (defn look-at
   ([x y]
@@ -55,25 +63,29 @@
     [id data]))
 
 (defn build-marine [parent]
-  (let [{:keys [user]
-         {:keys [x y]} :position} (@app-state-entities parent)
-        new-x (- x (rand 100))
-        new-y (- y (rand 100))
-        new-angle (rand 360)]
-    (add-entity (gen-id) (make-marine user new-x new-y new-angle))))
+  (if (>= @app-state-minerals marine-cost)
+    (let [{:keys [user]
+           {:keys [x y]} :position} (@app-state-entities parent)
+          {new-x :x
+           new-y :y} (select-spawn-point x y)
+          new-angle (rand 360)]
+      (swap-in! app-state [:resources :minerals] #(- % marine-cost))
+      (add-entity (gen-id) (make-marine user new-x new-y new-angle)))))
 
 (defn attack [id]
-  (swap! app-state #(update-in % [:entities id :hp] (fn [hp] (max 0 (- hp 1))))))
+  (swap-in! app-state [:entities id :hp] #(max 0 (- % 1))))
 
 (defn move-to [x y]
   (doseq [e @app-state-selected]
-    (swap! app-state #(update-in % [:entities e :position] (fn [pos] {:x x :y y})))))
+    (reset-in! app-state [:entities e :position] {:x x :y y})))
 
 (defn harvest []
-  nil)
+  (swap-in! app-state [:resources :minerals] inc))
 
-(defn execute-command [command]
-  (js/alert (name command)))
+(defn execute-command [entity command]
+  (cond
+    (= command :harvest) (harvest)
+    (= command :marine) (build-marine entity)))
 
 ;; example
 
@@ -98,10 +110,13 @@
                            :width width
                            :height height}}])
 
+(defn compute-angle-id [angle]
+  (.round js/Math (* (/ (mod angle 360.0) 360.0) 18)))
+
 (defn state-styles [data]
   (let [{:keys [hp type angle]} data
         type-class (name type)
-        angle-id (.round js/Math (* (/ (mod angle 360.0) 360.0) 18))]
+        angle-id (compute-angle-id angle)]
     (cond
       (= type :marine) (cond
                          (<= hp 0) (str type-class " marine-die")
@@ -109,11 +124,11 @@
       (= type :command-centre) #{type-class}
       :else #{type-class})))
 
-(defn commands-list [commands selected]
+(defn commands-list [entity commands selected]
   [:div.commands {:style {:display (if selected "initial" "none")}}
    (for [command commands]
      [:div {:class (str "command-"(name command))
-            :on-click #(execute-command command)}])])
+            :on-click #(execute-command entity command)}])])
 
 (defn entity [[id data]]
   (let [width (-> data :size :x)
@@ -130,21 +145,21 @@
     [:div.entity {:style {:width width
                           :height height
                           :left x
-                          :top y}
-                  :on-click #(cond
-                               (not= user @app-state-user) (attack id)
-                               selected (deselect id)
-                               :else (select id))}
-     [commands-list commands selected]
+                          :top y}}
+     [commands-list id commands selected]
      [hp-bar hp-width]
      [selection selected width height]
-     [:div {:class (state-styles data)}]]))
+     [:div {:class (state-styles data)
+            :on-click #(cond
+                         (not= user @app-state-user) (attack id)
+                         selected (deselect id)
+                         :else (select id))}]]))
 
 (defn entities []
   [:div (for [data @app-state-entities]
           [entity data])])
 
-(defn resources [data]
+(defn resources []
   [:div.resources
    [:div [:a {:href "#/"} "leave game"]]
    [:div "minerals : " @app-state-minerals]])
@@ -173,7 +188,7 @@
   [:div.game-page
    [game-map]
    [entities]
-   [resources @app-state-resources]])
+   [resources]])
 
 (defn current-page []
   [:div

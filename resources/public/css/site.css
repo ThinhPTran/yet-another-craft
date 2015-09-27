@@ -103,11 +103,13 @@ a:hover {
     width: 64px;
     height: 64px;
     background: url('/img/marine.png') left top no-repeat;
+    z-index: 1;
 }
 
 .marine-die {
     background-position: -448px -832px;
     animation: marine-die 0.5s steps(8) 1;
+    z-index: 0;
 }
 
 @keyframes marine-die {

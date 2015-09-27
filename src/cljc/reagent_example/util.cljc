@@ -26,6 +26,10 @@
    :selected false
    :status :static})
 
+(defn select-spawn-point [x y]
+  {:x (+ -50 (- x (rand 100)))
+   :y (+ 100 (- y (rand 200)))})
+
 (defn make-map []
   {:name "blood-bath"
    :width 2048
