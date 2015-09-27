@@ -13,3 +13,8 @@ pom.xml.asc
 /.repl
 *.log
 /.env
+/.cljs_rhino_repl/
+/resources/.DS_Store
+/resources/public/.DS_Store
+/src/clj/.DS_Store
+/resources/public/img/.DS_Store
