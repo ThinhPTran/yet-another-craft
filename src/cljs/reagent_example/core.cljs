@@ -8,8 +8,8 @@
                                                    gen-id
                                                    make-map
                                                    select-spawn-point
-                                                   marine-style
-                                                   command-centre-style]]
+                                                   select-centre-pos
+                                                   state-styles]]
             [goog.history.EventType :as EventType])
   (:import goog.History))
 
@@ -27,7 +27,13 @@
 (def state-user (cursor state [:user]))
 (def state-map (cursor state [:map]))
 
-;; commands
+;; Utils
+
+(defn look-at
+  ([{:keys [x y]}]
+   (.scrollTo js/window (- x 100) (- y 100))))
+
+;; Commands
 
 (defn add-entity [id e]
   (swap! state-entities #(assoc % id e)))
@@ -39,35 +45,21 @@
   (reset! state-selected #{})
   (swap! state-selected #(conj % entity)))
 
-(defn look-at
-  ([x y]
-   (.scrollTo js/window (- x 100) (- y 100)))
-  ([entity]
-   (let [{:keys [x y]} (get-in @state-entities [entity :position])]
-     (look-at x y))))
-
 (defn build-marine [parent]
   (if (>= @state-minerals marine-cost)
-    (let [{:keys [user]
-           {:keys [x y]} :position} (@state-entities parent)
-          {new-x :x
-           new-y :y} (select-spawn-point x y)
+    (let [{:keys [user position]} (@state-entities parent)
+          new-pos (select-spawn-point position -64 -64)
           new-angle (rand 360)]
       (swap! state-minerals #(- % marine-cost))
-      (add-entity (gen-id) (make-marine user
-                                        (- new-x 64)
-                                        (- new-y 64)
-                                        new-angle)))))
+      (add-entity (gen-id) (make-marine user new-pos new-angle)))))
 
 (defn build-command-centre [user]
-  (let [{:keys [width height]} @state-map
-        id (gen-id)
-        x (+ 100 (rand (- width 200)))
-        y (+ 100 (rand (- height 200)))
-        data (make-command-centre user x y)]
+  (let [id (gen-id)
+        pos (select-centre-pos @state-map)
+        data (make-command-centre user pos)]
     (add-entity id data)
     (if (= user @state-user)
-      (look-at x y))
+      (look-at pos))
     (build-marine id)
     (build-marine id)
     (build-marine id)
@@ -76,9 +68,9 @@
 (defn attack [id]
   (swap! (cursor state-entities [id :hp]) #(-> % (- 1) (max 0))))
 
-(defn move-to [x y]
+(defn move-to [pos]
   (doseq [e @state-selected]
-    (reset! (cursor state [:entities e :position]) (select-spawn-point x y))))
+    (reset! (cursor state [:entities e :position]) (select-spawn-point pos))))
 
 (defn harvest []
   (swap! state-minerals inc))
@@ -108,16 +100,6 @@
                            :width width
                            :height height}}])
 
-(defn compute-angle-id [angle]
-  (.round js/Math (* (/ (mod angle 360.0) 360.0) 18)))
-
-(defn state-styles [data]
-  (let [{:keys [hp type angle]} data
-        angle-id (compute-angle-id angle)]
-    (cond
-      (= type :marine) (marine-style hp angle-id)
-      (= type :command-centre) (command-centre-style hp))))
-
 (defn commands-list [entity commands selected]
   [:div.commands {:style {:display (if selected "initial" "none")}}
    (for [command commands]
@@ -129,6 +111,7 @@
         height (-> data :size :y)
         x (-> data :position :x)
         y (-> data :position :y)
+        angle (data :angle)
         hp (data :hp)
         max-hp (data :max-hp)
         hp-width (* (/ hp max-hp) width)
@@ -143,7 +126,7 @@
      [commands-list id commands selected]
      [hp-bar hp-width]
      [selection selected width height]
-     [:div {:class (state-styles data)
+     [:div {:class (state-styles hp type angle)
             :on-click #(cond
                          (not= user @state-user) (attack id)
                          selected (deselect id)
@@ -154,8 +137,7 @@
           ^{:key id} [entity [id data]])])
 
 (defn resources []
-  [:div.resources
-   [:div "minerals : " @state-minerals]])
+  [:div.resources "minerals : " @state-minerals])
 
 (defn game-map []
   (let [{:keys [name width height]} @state-map]
@@ -169,7 +151,7 @@
                                            :left x
                                            :width tile-size
                                            :height tile-size}
-                                   :on-click #(move-to x y)}]))]))
+                                   :on-click #(move-to {:x x :y y})}]))]))
 
 (defn game-page []
   [:div.game-page
