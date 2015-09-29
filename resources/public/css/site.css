@@ -85,6 +85,15 @@ a:hover {
     width: 32px;
     height: 32px;
     background-position: -180px 0px;
+    margin-bottom: 8px;
+}
+
+.command-repair {
+    background: url('/img/cmd-icons.png') left top no-repeat;
+    width: 32px;
+    height: 32px;
+    background-position: -72px -372px;
+    margin-bottom: 8px;
 }
 
 .command-centre {
@@ -94,6 +103,25 @@ a:hover {
     width: 120px;
     height: 120px;
     background: url('/img/terran-building.png') left top no-repeat;
+}
+
+.command-centre-die {
+    width: 200px;
+    height: 200px;
+    left: -40px;
+    top: -30px;
+    background: url('/img/building-burst.png') left top no-repeat;
+    background-position: -800px -600px;
+    animation: command-centre-die 0.5s steps(5) 1;
+}
+
+@keyframes command-centre-die {
+    0% {
+        background-position: 0px -600px;
+    }
+    100% {
+        background-position: -1000px -600px;
+    }
 }
 
 .marine {

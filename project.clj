@@ -19,6 +19,7 @@
                  [secretary "1.2.3"]]
 
   :plugins [[lein-environ "1.0.1"]
+            [refactor-nrepl "2.0.0-SNAPSHOT"]
             [lein-asset-minifier "0.2.2"]
             [cider/cider-nrepl "0.10.0-SNAPSHOT"]]
 

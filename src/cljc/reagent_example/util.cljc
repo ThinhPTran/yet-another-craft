@@ -9,29 +9,37 @@
    :type :marine
    :commands #{}
    :target nil
-   :user user
-   :status :static})
+   :user user})
 
 (defn make-command-centre [user x y]
-  {:hp 40
+  {:hp 30
    :max-hp 40
    :position  {:x x :y y}
    :angle 0
    :size {:x 120 :y 120}
    :type :command-centre
-   :commands #{:harvest :marine}
+   :commands #{:harvest :marine :repair}
    :target nil
-   :user user
-   :status :static})
+   :user user})
 
 (defn select-spawn-point [x y]
-  {:x (+ -25 (- x (rand 50)))
-   :y (+ 50 (- y (rand 100)))})
+  {:x (+ 32 (- x (rand 64)))
+   :y (+ 32 (- y (rand 64)))})
 
 (defn make-map []
   {:name "blood-bath"
    :width 2048
    :height 2048})
+
+(defn marine-style [hp angle-id]
+  (cond
+    (<= hp 0) "marine marine-die"
+    :else (str "marine" " marine-run-" angle-id)))
+
+(defn command-centre-style [hp]
+  (cond
+    (<= hp 0) "command-centre command-centre-die"
+    :else (str "command-centre")))
 
 (defn gen-id []
   (rand 1000000000))

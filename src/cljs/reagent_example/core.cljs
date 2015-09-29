@@ -7,70 +7,66 @@
                                                    make-command-centre
                                                    gen-id
                                                    make-map
-                                                   select-spawn-point]]
+                                                   select-spawn-point
+                                                   marine-style
+                                                   command-centre-style]]
             [goog.history.EventType :as EventType])
   (:import goog.History))
 
-(def ^:const marine-cost 10)
-
-(def app-state (atom {:resources {:minerals 100}
-                      :entities {}
-                      :selected #{}
-                      :user "ed"
-                      :map (make-map)}))
-(def app-state-minerals (cursor app-state [:resources :minerals]))
-(def app-state-entities (cursor app-state [:entities]))
-(def app-state-selected (cursor app-state [:selected]))
-(def app-state-user (cursor app-state [:user]))
-(def app-state-map (cursor app-state [:map]))
+(def marine-cost 10)
 (def tile-size 64)
 
-;; utils
-
-(defn swap-in! [where path f]
-  (swap! where #(update-in % path f)))
-
-(defn reset-in! [where path v]
-  (swap-in! where path (fn [x] v)))
+(def state (atom {:resources {:minerals 100}
+                  :entities {}
+                  :selected #{}
+                  :user nil
+                  :map (make-map)}))
+(def state-minerals (cursor state [:resources :minerals]))
+(def state-entities (cursor state [:entities]))
+(def state-selected (cursor state [:selected]))
+(def state-user (cursor state [:user]))
+(def state-map (cursor state [:map]))
 
 ;; commands
 
 (defn add-entity [id e]
-  (swap! app-state-entities #(assoc % id e)))
+  (swap! state-entities #(assoc % id e)))
 
 (defn deselect [entity]
-  (swap! app-state-selected #(disj % entity)))
+  (swap! state-selected #(disj % entity)))
 
 (defn select [entity]
-  ;; (doseq [e @app-state-selected]
-  ;;   (deselect e))
-  (swap! app-state-selected #(conj % entity)))
+  (reset! state-selected #{})
+  (swap! state-selected #(conj % entity)))
 
 (defn look-at
   ([x y]
    (.scrollTo js/window (- x 100) (- y 100)))
   ([entity]
-   (let [{:keys [x y]} (get-in @app-state-entities [entity :position])]
+   (let [{:keys [x y]} (get-in @state-entities [entity :position])]
      (look-at x y))))
 
 (defn build-marine [parent]
-  (if (>= @app-state-minerals marine-cost)
+  (if (>= @state-minerals marine-cost)
     (let [{:keys [user]
-           {:keys [x y]} :position} (@app-state-entities parent)
+           {:keys [x y]} :position} (@state-entities parent)
           {new-x :x
            new-y :y} (select-spawn-point x y)
           new-angle (rand 360)]
-      (swap-in! app-state [:resources :minerals] #(- % marine-cost))
-      (add-entity (gen-id) (make-marine user new-x new-y new-angle)))))
+      (swap! state-minerals #(- % marine-cost))
+      (add-entity (gen-id) (make-marine user
+                                        (- new-x 64)
+                                        (- new-y 64)
+                                        new-angle)))))
 
 (defn build-command-centre [user]
-  (let [{:keys [width height]} @app-state-map
+  (let [{:keys [width height]} @state-map
         id (gen-id)
         x (+ 100 (rand (- width 200)))
         y (+ 100 (rand (- height 200)))
         data (make-command-centre user x y)]
     (add-entity id data)
-    (if (= user @app-state-user)
+    (if (= user @state-user)
       (look-at x y))
     (build-marine id)
     (build-marine id)
@@ -78,24 +74,28 @@
     [id data]))
 
 (defn attack [id]
-  (swap-in! app-state [:entities id :hp] #(max 0 (- % 1))))
+  (swap! (cursor state-entities [id :hp]) #(-> % (- 1) (max 0))))
 
 (defn move-to [x y]
-  (doseq [e @app-state-selected]
-    (reset-in! app-state [:entities e :position] (select-spawn-point x y))))
+  (doseq [e @state-selected]
+    (reset! (cursor state [:entities e :position]) (select-spawn-point x y))))
 
 (defn harvest []
-  (swap-in! app-state [:resources :minerals] inc))
+  (swap! state-minerals inc))
+
+(defn repair [entity]
+  (let [{:keys [hp max-hp]} (@state-entities entity)
+        minerals @state-minerals]
+    (if (and (< hp max-hp) (> minerals 0))
+      (do
+        (swap! state-minerals dec)
+        (swap! (cursor state-entities [entity :hp]) inc)))))
 
 (defn execute-command [entity command]
   (cond
     (= command :harvest) (harvest)
-    (= command :marine) (build-marine entity)))
-
-;; example
-
-(def ed-centre (first (build-command-centre "ed")))
-(def ivan-centre (first (build-command-centre "ivan")))
+    (= command :marine) (build-marine entity)
+    (= command :repair) (repair entity)))
 
 ;; -------------------------
 ;; Views
@@ -113,20 +113,16 @@
 
 (defn state-styles [data]
   (let [{:keys [hp type angle]} data
-        type-class (name type)
         angle-id (compute-angle-id angle)]
     (cond
-      (= type :marine) (cond
-                         (<= hp 0) (str type-class " marine-die")
-                         :else (str type-class " marine-run-" angle-id))
-      (= type :command-centre) #{type-class}
-      :else #{type-class})))
+      (= type :marine) (marine-style hp angle-id)
+      (= type :command-centre) (command-centre-style hp))))
 
 (defn commands-list [entity commands selected]
   [:div.commands {:style {:display (if selected "initial" "none")}}
    (for [command commands]
-     [:div {:class (str "command-"(name command))
-            :on-click #(execute-command entity command)}])])
+     ^{:key command } [:div {:class (str "command-" (name command))
+                             :on-click #(execute-command entity command)}])])
 
 (defn entity [[id data]]
   (let [width (-> data :size :x)
@@ -136,7 +132,7 @@
         hp (data :hp)
         max-hp (data :max-hp)
         hp-width (* (/ hp max-hp) width)
-        selected (@app-state-selected id)
+        selected (@state-selected id)
         type (data :type)
         user (data :user)
         commands (data :commands)]
@@ -149,32 +145,31 @@
      [selection selected width height]
      [:div {:class (state-styles data)
             :on-click #(cond
-                         (not= user @app-state-user) (attack id)
+                         (not= user @state-user) (attack id)
                          selected (deselect id)
                          :else (select id))}]]))
 
 (defn entities []
-  [:div (for [data @app-state-entities]
-          [entity data])])
+  [:div (for [[id data] @state-entities]
+          ^{:key id} [entity [id data]])])
 
 (defn resources []
   [:div.resources
-   [:div "minerals : " @app-state-minerals]])
+   [:div "minerals : " @state-minerals]])
 
 (defn game-map []
-  (let [{:keys [name width height]} @app-state-map]
+  (let [{:keys [name width height]} @state-map]
     [:div {:class #{name}
-           :style {:width width
-                   :height height}}
+           :style {:width width :height height}}
      (for [i (range (/ width tile-size))
            j (range (/ height tile-size))]
        (let [x (* i tile-size)
              y (* j tile-size)]
-         [:div.tile {:style {:top y
-                             :left x
-                             :width tile-size
-                             :height tile-size}
-                     :on-click #(move-to x y)}]))]))
+         ^{:key [i j]} [:div.tile {:style {:top y
+                                           :left x
+                                           :width tile-size
+                                           :height tile-size}
+                                   :on-click #(move-to x y)}]))]))
 
 (defn game-page []
   [:div.game-page
@@ -186,4 +181,13 @@
   [:div
    [(session/get :current-page)]])
 
-(reagent/render [game-page] (.getElementById js/document "app"))
+
+(defn mount-root []
+  (reagent/render [game-page] (.getElementById js/document "app"))
+  (reset! state-user "ed")
+  (build-command-centre "ed")
+  (build-command-centre "ivan"))
+
+(defn init! []
+  (println "started")
+  (mount-root))
