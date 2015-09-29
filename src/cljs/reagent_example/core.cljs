@@ -48,7 +48,7 @@
 (defn build-marine [parent]
   (if (>= @state-minerals marine-cost)
     (let [{:keys [user position]} (@state-entities parent)
-          new-pos (select-spawn-point position -64 -64)
+          new-pos (select-spawn-point position {:x -64 :y -64})
           new-angle (rand 360)]
       (swap! state-minerals #(- % marine-cost))
       (add-entity (gen-id) (make-marine user new-pos new-angle)))))

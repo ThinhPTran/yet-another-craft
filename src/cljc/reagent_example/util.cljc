@@ -27,11 +27,11 @@
    :y (+ 200 (rand (- height 400)))})
 
 (defn select-spawn-point
-  ([{:keys [x y]} offset-x offset-y]
+  ([{:keys [x y]} {offset-x :x offset-y :y}]
    {:x (+ offset-x 32 (- x (rand 64)))
     :y (+ offset-y 32 (- y (rand 64)))})
   ([pos]
-   (select-spawn-point pos 0 0)))
+   (select-spawn-point pos {:x 0 :y 0})))
 
 (defn make-map []
   {:name "blood-bath"
