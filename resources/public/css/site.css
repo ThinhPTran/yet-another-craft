@@ -40,10 +40,11 @@ a:hover {
 }
 
 .resources {
-    position: fixed;
-    right: 10px;
-    top: 10px;
-    text-align: right;
+    position: absolute;
+    right: 0px;
+    top: -25px;
+    width: 120px;
+    text-align: center;
     color: lime;
 }
 

@@ -106,6 +106,10 @@
      ^{:key command } [:div {:class (str "command-" (name command))
                              :on-click #(execute-command entity command)}])])
 
+(defn resources [selected type]
+  (if (and selected (= type :command-centre))
+    [:div.resources "minerals : " @state-minerals]))
+
 (defn entity [[id data]]
   (let [width (-> data :size :x)
         height (-> data :size :y)
@@ -123,9 +127,10 @@
                           :height height
                           :left x
                           :top y}}
-     [commands-list id commands selected]
      [hp-bar hp-width]
      [selection selected width height]
+     [commands-list id commands selected]
+     [resources selected type]
      [:div {:class (state-styles hp type angle)
             :on-click #(cond
                          (not= user @state-user) (attack id)
@@ -135,9 +140,6 @@
 (defn entities []
   [:div (for [[id data] @state-entities]
           ^{:key id} [entity [id data]])])
-
-(defn resources []
-  [:div.resources "minerals : " @state-minerals])
 
 (defn game-map []
   (let [{:keys [name width height]} @state-map]
@@ -156,8 +158,7 @@
 (defn game-page []
   [:div.game-page
    [game-map]
-   [entities]
-   [resources]])
+   [entities]])
 
 (defn current-page []
   [:div
