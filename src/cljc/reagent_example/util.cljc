@@ -10,7 +10,6 @@
    :commands #{}
    :target nil
    :user user
-   :selected false
    :status :static})
 
 (defn make-command-centre [user x y]
@@ -23,12 +22,11 @@
    :commands #{:harvest :marine}
    :target nil
    :user user
-   :selected false
    :status :static})
 
 (defn select-spawn-point [x y]
-  {:x (+ -50 (- x (rand 100)))
-   :y (+ 100 (- y (rand 200)))})
+  {:x (+ -25 (- x (rand 50)))
+   :y (+ 50 (- y (rand 100)))})
 
 (defn make-map []
   {:name "blood-bath"

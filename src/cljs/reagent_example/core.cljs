@@ -1,15 +1,15 @@
 (ns reagent-example.core
-    (:require [reagent.core :as reagent :refer [atom cursor]]
-              [reagent.session :as session]
-              [secretary.core :as secretary :include-macros true]
-              [goog.events :as events]
-              [reagent-example.util :as util :refer [make-marine
-                                                     make-command-centre
-                                                     gen-id
-                                                     make-map
-                                                     select-spawn-point]]
-              [goog.history.EventType :as EventType])
-    (:import goog.History))
+  (:require [reagent.core :as reagent :refer [atom cursor]]
+            [reagent.session :as session]
+            [secretary.core :as secretary :include-macros true]
+            [goog.events :as events]
+            [reagent-example.util :as util :refer [make-marine
+                                                   make-command-centre
+                                                   gen-id
+                                                   make-map
+                                                   select-spawn-point]]
+            [goog.history.EventType :as EventType])
+  (:import goog.History))
 
 (def ^:const marine-cost 10)
 
@@ -25,24 +25,26 @@
 (def app-state-map (cursor app-state [:map]))
 (def tile-size 64)
 
+;; utils
+
 (defn swap-in! [where path f]
   (swap! where #(update-in % path f)))
 
 (defn reset-in! [where path v]
   (swap-in! where path (fn [x] v)))
 
+;; commands
+
 (defn add-entity [id e]
-  (swap-in! app-state [:entities] #(assoc % id e)))
+  (swap! app-state-entities #(assoc % id e)))
 
 (defn deselect [entity]
-  (reset-in! app-state [:entities entity :selected] false)
-  (swap-in! app-state [:selected] #(disj % entity)))
+  (swap! app-state-selected #(disj % entity)))
 
 (defn select [entity]
-  (doseq [e @app-state-selected]
-    (deselect e))
-  (reset-in! app-state [:entities entity :selected] true)
-  (swap-in! app-state [:selected] #(conj % entity)))
+  ;; (doseq [e @app-state-selected]
+  ;;   (deselect e))
+  (swap! app-state-selected #(conj % entity)))
 
 (defn look-at
   ([x y]
@@ -50,17 +52,6 @@
   ([entity]
    (let [{:keys [x y]} (get-in @app-state-entities [entity :position])]
      (look-at x y))))
-
-(defn build-command-centre [user]
-  (let [{:keys [width height]} @app-state-map
-        id (gen-id)
-        x (+ 100 (rand (- width 200)))
-        y (+ 100 (rand (- height 200)))
-        data (make-command-centre user x y)]
-    (add-entity id data)
-    (if (= user @app-state-user)
-      (look-at x y))
-    [id data]))
 
 (defn build-marine [parent]
   (if (>= @app-state-minerals marine-cost)
@@ -72,12 +63,26 @@
       (swap-in! app-state [:resources :minerals] #(- % marine-cost))
       (add-entity (gen-id) (make-marine user new-x new-y new-angle)))))
 
+(defn build-command-centre [user]
+  (let [{:keys [width height]} @app-state-map
+        id (gen-id)
+        x (+ 100 (rand (- width 200)))
+        y (+ 100 (rand (- height 200)))
+        data (make-command-centre user x y)]
+    (add-entity id data)
+    (if (= user @app-state-user)
+      (look-at x y))
+    (build-marine id)
+    (build-marine id)
+    (build-marine id)
+    [id data]))
+
 (defn attack [id]
   (swap-in! app-state [:entities id :hp] #(max 0 (- % 1))))
 
 (defn move-to [x y]
   (doseq [e @app-state-selected]
-    (reset-in! app-state [:entities e :position] {:x x :y y})))
+    (reset-in! app-state [:entities e :position] (select-spawn-point x y))))
 
 (defn harvest []
   (swap-in! app-state [:resources :minerals] inc))
@@ -91,13 +96,6 @@
 
 (def ed-centre (first (build-command-centre "ed")))
 (def ivan-centre (first (build-command-centre "ivan")))
-(build-marine ed-centre)
-(build-marine ed-centre)
-(build-marine ed-centre)
-(build-marine ivan-centre)
-(build-marine ivan-centre)
-(build-marine ivan-centre)
-
 
 ;; -------------------------
 ;; Views
@@ -138,7 +136,7 @@
         hp (data :hp)
         max-hp (data :max-hp)
         hp-width (* (/ hp max-hp) width)
-        selected (data :selected)
+        selected (@app-state-selected id)
         type (data :type)
         user (data :user)
         commands (data :commands)]
@@ -161,7 +159,6 @@
 
 (defn resources []
   [:div.resources
-   [:div [:a {:href "#/"} "leave game"]]
    [:div "minerals : " @app-state-minerals]])
 
 (defn game-map []
@@ -179,11 +176,6 @@
                              :height tile-size}
                      :on-click #(move-to x y)}]))]))
 
-(defn home-page []
-  [:div.home-page
-   [:h2 "Welcome our awesome game!"]
-   [:div [:a {:href "#/game"} "start"]]])
-
 (defn game-page []
   [:div.game-page
    [game-map]
@@ -194,33 +186,4 @@
   [:div
    [(session/get :current-page)]])
 
-;; -------------------------
-;; Routes
-(secretary/set-config! :prefix "#")
-
-(secretary/defroute "/" []
-  (session/put! :current-page #'home-page))
-
-(secretary/defroute "/game" []
-  (session/put! :current-page #'game-page))
-
-;; -------------------------
-;; History
-;; must be called after routes have been defined
-(defn hook-browser-navigation! []
-  (doto (History.)
-    (events/listen
-     EventType/NAVIGATE
-     (fn [event]
-       (secretary/dispatch! (.-token event))))
-    (.setEnabled true)))
-
-;; -------------------------
-;; Initialize app
-(defn mount-root []
-  (reagent/render [current-page] (.getElementById js/document "app"))
-  (look-at ed-centre))
-
-(defn init! []
-  (hook-browser-navigation!)
-  (mount-root))
+(reagent/render [game-page] (.getElementById js/document "app"))
