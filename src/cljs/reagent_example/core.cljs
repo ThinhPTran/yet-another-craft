@@ -9,23 +9,24 @@
                                                    make-map
                                                    select-spawn-point
                                                    select-centre-pos
-                                                   state-styles]]
+                                                   state-styles
+                                                   interpolate]]
             [goog.history.EventType :as EventType])
   (:import goog.History))
 
 (def marine-cost 10)
 (def tile-size 64)
 
-(def state (atom {:resources {:minerals 100}
-                  :entities {}
-                  :selected #{}
-                  :user nil
-                  :map (make-map)}))
-(def state-minerals (cursor state [:resources :minerals]))
-(def state-entities (cursor state [:entities]))
-(def state-selected (cursor state [:selected]))
-(def state-user (cursor state [:user]))
-(def state-map (cursor state [:map]))
+(defonce state (atom {:resources {:minerals 100}
+                      :entities {}
+                      :selected #{}
+                      :user nil
+                      :map (make-map)}))
+(defonce state-minerals (cursor state [:resources :minerals]))
+(defonce state-entities (cursor state [:entities]))
+(defonce state-selected (cursor state [:selected]))
+(defonce state-user (cursor state [:user]))
+(defonce state-map (cursor state [:map]))
 
 ;; Utils
 
@@ -70,10 +71,10 @@
 
 (defn move-to [pos]
   (doseq [e @state-selected]
-    (reset! (cursor state [:entities e :position]) (select-spawn-point pos))))
+    (reset! (cursor state [:entities e :target]) (select-spawn-point pos))))
 
-(defn harvest []
-  (swap! state-minerals inc))
+(defn harvest [value]
+  (swap! state-minerals (partial + value)))
 
 (defn repair [entity]
   (let [{:keys [hp max-hp]} (@state-entities entity)
@@ -85,7 +86,7 @@
 
 (defn execute-command [entity command]
   (cond
-    (= command :harvest) (harvest)
+    (= command :harvest) (harvest 1)
     (= command :marine) (build-marine entity)
     (= command :repair) (repair entity)))
 
@@ -160,17 +161,31 @@
    [game-map]
    [entities]])
 
-(defn current-page []
-  [:div
-   [(session/get :current-page)]])
-
-
 (defn mount-root []
-  (reagent/render [game-page] (.getElementById js/document "app"))
-  (reset! state-user "ed")
-  (build-command-centre "ed")
-  (build-command-centre "ivan"))
+  (reagent/render [game-page] (.getElementById js/document "app")))
+
+(defn core-loop-handler [time]
+  (doseq [[id {:keys [target position]}] @state-entities]
+    (if target
+      (let [{:keys [position angle]} (interpolate position target (* time 0.07))]
+        (if (and position angle)
+          (do
+            (reset! (cursor state-entities [id :position]) position)
+            (reset! (cursor state-entities [id :angle]) angle)))))))
+
+(def current-time (atom nil))
+
+(defn core-loop [time]
+  (if (not @current-time)
+    (reset! current-time time))
+  (core-loop-handler (- time @current-time))
+  (reset! current-time time)
+  (js/requestAnimationFrame core-loop))
 
 (defn init! []
   (println "started")
-  (mount-root))
+  (mount-root)
+  (reset! state-user "ed")
+  (build-command-centre "ed")
+  (build-command-centre "ivan")
+  (js/requestAnimationFrame core-loop))

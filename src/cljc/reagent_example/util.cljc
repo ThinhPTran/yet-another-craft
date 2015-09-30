@@ -33,6 +33,16 @@
   ([pos]
    (select-spawn-point pos {:x 0 :y 0})))
 
+(defn interpolate [{:keys [x y] :as pos} {tx :x ty :y} delta]
+  (let [{dx :x dy :y} {:x (- tx x) :y (- ty y)}
+        len (Math/sqrt (+ (* dx dx) (* dy dy)))
+        {nx :x ny :y} {:x (/ dx len) :y (/ dy len)}
+        sign (if (> ny 0) 180 -180)]
+    (if (> len 10)
+      {:position {:x (+ x (* nx delta)) :y (+ y (* ny delta))}
+       :angle (+ 360 90 (/ (* sign (Math/acos nx)) 3.1415926))}
+      nil)))
+
 (defn make-map []
   {:name "blood-bath"
    :width 2048
@@ -49,7 +59,7 @@
     :else (str "command-centre")))
 
 (defn compute-angle-id [angle]
-  (int (* (/ (mod angle 360.0) 360.0) 18)))
+  (Math/round (* (/ (mod angle 360.0) 360.0) 18)))
 
 (defn state-styles [hp type angle]
   (let [angle-id (compute-angle-id angle)]
