@@ -3,19 +3,21 @@
             [reagent.session :as session]
             [secretary.core :as secretary :include-macros true]
             [goog.events :as events]
-            [reagent-example.util :as util :refer [make-marine
-                                                   make-command-centre
-                                                   gen-id
-                                                   make-map
-                                                   select-spawn-point
-                                                   select-centre-pos
-                                                   state-styles
-                                                   interpolate]]
+            [reagent-example.util :refer [make-marine
+                                          make-command-centre
+                                          gen-id
+                                          make-map
+                                          select-spawn-point
+                                          select-centre-pos
+                                          state-styles
+                                          interpolate]]
             [goog.history.EventType :as EventType])
   (:import goog.History))
 
 (def marine-cost 10)
+(def marine-velocity 0.07)
 (def tile-size 64)
+(def harvest-power 1)
 
 (defonce state (atom {:resources {:minerals 100}
                       :entities {}
@@ -86,7 +88,7 @@
 
 (defn execute-command [entity command]
   (cond
-    (= command :harvest) (harvest 1)
+    (= command :harvest) (harvest harvest-power)
     (= command :marine) (build-marine entity)
     (= command :repair) (repair entity)))
 
@@ -167,7 +169,7 @@
 (defn core-loop-handler [time]
   (doseq [[id {:keys [target position]}] @state-entities]
     (if target
-      (let [{:keys [position angle]} (interpolate position target (* time 0.07))]
+      (let [{:keys [position angle]} (interpolate position target (* time marine-velocity))]
         (if (and position angle)
           (do
             (reset! (cursor state-entities [id :position]) position)
@@ -176,9 +178,9 @@
 (def current-time (atom nil))
 
 (defn core-loop [time]
-  (if (not @current-time)
-    (reset! current-time time))
-  (core-loop-handler (- time @current-time))
+  (let [prev-time @current-time]
+    (if prev-time
+      (core-loop-handler (- time prev-time))))
   (reset! current-time time)
   (js/requestAnimationFrame core-loop))
 
