@@ -1,6 +1,6 @@
 (ns reagent-example.repl
   (:use reagent-example.handler
-        ring.server.standalone
+        [org.httpkit.server :refer [run-server]]
         [ring.middleware file-info file]))
 
 (defonce server (atom nil))
@@ -21,12 +21,12 @@
   [& [port]]
   (let [port (if port (Integer/parseInt port) 3000)]
     (reset! server
-            (serve (get-handler)
-                   {:port port
-                    :auto-reload? true
-                    :join? false}))
+            (run-server (get-handler)
+                        {:port port
+                         :auto-reload? true
+                         :join? false}))
     (println (str "You can view the site at http://localhost:" port))))
 
 (defn stop-server []
-  (.stop @server)
+  (@server)
   (reset! server nil))

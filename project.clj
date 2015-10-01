@@ -6,9 +6,10 @@
 
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/clojurescript "1.7.122" :scope "provided"]
-                 [ring-server "0.4.0"]
-                 [ring "1.4.0"]
+                 [ring/ring-devel "1.4.0"]
+                 [ring/ring-core "1.4.0"]
                  [ring/ring-defaults "0.1.5"]
+                 [http-kit "2.1.19"]
                  [reagent "0.5.1"]
                  [reagent-forms "0.5.11"]
                  [reagent-utils "0.1.5"]

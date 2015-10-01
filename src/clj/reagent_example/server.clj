@@ -1,9 +1,9 @@
 (ns reagent-example.server
   (:require [reagent-example.handler :refer [app]]
             [environ.core :refer [env]]
-            [ring.adapter.jetty :refer [run-jetty]])
+            [org.httpkit.server :refer [run-server]])
   (:gen-class))
 
  (defn -main [& args]
    (let [port (Integer/parseInt (or (env :port) "3000"))]
-     (run-jetty app {:port port :join? false})))
+     (run-server app {:port port :join? false})))
