@@ -6,7 +6,8 @@
             [hiccup.page :refer [include-js include-css]]
             [prone.middleware :refer [wrap-exceptions]]
             [ring.middleware.reload :refer [wrap-reload]]
-            [environ.core :refer [env]]))
+            [environ.core :refer [env]]
+            [org.httpkit.server :refer [with-channel on-close on-receive send!]]))
 
 (def home-page
   (html
@@ -24,8 +25,15 @@
        " in order to start the compiler"]]
      (include-js "js/app.js")]]))
 
+(defn web-socket-handler [req]
+  (with-channel req channel
+    (println "socket opened")
+    (on-close channel (fn [status] (println "socket closed")))
+    (on-receive channel (fn [data] (send! channel (str "echo: " data))))))
+
 (defroutes routes
   (GET "/" [] home-page)
+  (GET "/ws" [] web-socket-handler)
   (resources "/")
   (not-found "Not Found"))
 
