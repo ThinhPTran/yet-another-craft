@@ -1,13 +1,13 @@
 (ns reagent-example.handler
   (:require [compojure.core :refer [GET defroutes]]
             [compojure.route :refer [not-found resources]]
+            [org.httpkit.server :refer [with-channel on-close on-receive send!]]
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
+            [ring.middleware.reload :refer [wrap-reload]]
+            [prone.middleware :refer [wrap-exceptions]]
             [hiccup.core :refer [html]]
             [hiccup.page :refer [include-js include-css]]
-            [prone.middleware :refer [wrap-exceptions]]
-            [ring.middleware.reload :refer [wrap-reload]]
-            [environ.core :refer [env]]
-            [org.httpkit.server :refer [with-channel on-close on-receive send!]]))
+            [environ.core :refer [env]]))
 
 (def home-page
   (html
