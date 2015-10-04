@@ -29,7 +29,8 @@
   (with-channel req channel
     (println "socket opened")
     (on-close channel (fn [status] (println "socket closed")))
-    (on-receive channel (fn [data] (send! channel (str "echo: " data))))))
+    (on-receive channel (fn [data]
+                          (send! channel (str "echo: " data))))))
 
 (defroutes routes
   (GET "/" [] home-page)

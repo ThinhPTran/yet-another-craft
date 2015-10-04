@@ -17,7 +17,8 @@
                  [compojure "1.4.0"]
                  [hiccup "1.0.5"]
                  [environ "1.0.1"]
-                 [secretary "1.2.3"]]
+                 [secretary "1.2.3"]
+                 [jarohen/chord "0.6.0"]]
 
   :plugins [[lein-environ "1.0.1"]
             [refactor-nrepl "2.0.0-SNAPSHOT"]

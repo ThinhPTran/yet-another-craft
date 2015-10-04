@@ -48,6 +48,13 @@
    :width 2048
    :height 2048})
 
+(defn make-state []
+  {:resources {:minerals 100}
+   :entities {}
+   :selected #{}
+   :user nil
+   :map (make-map)})
+
 (defn marine-style [hp angle-id]
   (cond
     (<= hp 0) "marine marine-die"

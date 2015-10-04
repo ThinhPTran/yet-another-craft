@@ -1,17 +1,11 @@
 (ns reagent-example.core
-  (:require [reagent.core :as reagent :refer [atom cursor]]
+  (:require [reagent.core :as r]
             [reagent.session :as session]
             [secretary.core :as secretary :include-macros true]
             [goog.events :as events]
-            [reagent-example.util :refer [make-marine
-                                          make-command-centre
-                                          gen-id
-                                          make-map
-                                          select-spawn-point
-                                          select-centre-pos
-                                          state-styles
-                                          interpolate]]
-            [goog.history.EventType :as EventType])
+            [reagent-example.util :as util]
+            [goog.history.EventType :as EventType]
+            [chord.client :as chord])
   (:import goog.History))
 
 (def marine-cost 10)
@@ -19,16 +13,12 @@
 (def tile-size 64)
 (def harvest-power 1)
 
-(defonce state (atom {:resources {:minerals 100}
-                      :entities {}
-                      :selected #{}
-                      :user nil
-                      :map (make-map)}))
-(defonce state-minerals (cursor state [:resources :minerals]))
-(defonce state-entities (cursor state [:entities]))
-(defonce state-selected (cursor state [:selected]))
-(defonce state-user (cursor state [:user]))
-(defonce state-map (cursor state [:map]))
+(defonce state (r/atom (util/make-state)))
+(defonce state-minerals (r/cursor state [:resources :minerals]))
+(defonce state-entities (r/cursor state [:entities]))
+(defonce state-selected (r/cursor state [:selected]))
+(defonce state-user (r/cursor state [:user]))
+(defonce state-map (r/cursor state [:map]))
 
 ;; Utils
 
@@ -51,15 +41,15 @@
 (defn build-marine [parent]
   (if (>= @state-minerals marine-cost)
     (let [{:keys [user position]} (@state-entities parent)
-          new-pos (select-spawn-point position {:x -64 :y -64})
+          new-pos (util/select-spawn-point position {:x -64 :y -64})
           new-angle (rand 360)]
       (swap! state-minerals #(- % marine-cost))
-      (add-entity (gen-id) (make-marine user new-pos new-angle)))))
+      (add-entity (util/gen-id) (util/make-marine user new-pos new-angle)))))
 
 (defn build-command-centre [user]
-  (let [id (gen-id)
-        pos (select-centre-pos @state-map)
-        data (make-command-centre user pos)]
+  (let [id (util/gen-id)
+        pos (util/select-centre-pos @state-map)
+        data (util/make-command-centre user pos)]
     (add-entity id data)
     (if (= user @state-user)
       (look-at pos))
@@ -69,11 +59,11 @@
     [id data]))
 
 (defn attack [id]
-  (swap! (cursor state-entities [id :hp]) #(-> % (- 1) (max 0))))
+  (swap! (r/cursor state-entities [id :hp]) #(-> % (- 1) (max 0))))
 
 (defn move-to [pos]
   (doseq [e @state-selected]
-    (reset! (cursor state [:entities e :target]) (select-spawn-point pos))))
+    (reset! (r/cursor state [:entities e :target]) (util/select-spawn-point pos))))
 
 (defn harvest [value]
   (swap! state-minerals (partial + value)))
@@ -84,7 +74,7 @@
     (if (and (< hp max-hp) (> minerals 0))
       (do
         (swap! state-minerals dec)
-        (swap! (cursor state-entities [entity :hp]) inc)))))
+        (swap! (r/cursor state-entities [entity :hp]) inc)))))
 
 (defn execute-command [entity command]
   (cond
@@ -134,7 +124,7 @@
      [selection selected width height]
      [commands-list id commands selected]
      [resources selected type]
-     [:div {:class (state-styles hp type angle)
+     [:div {:class (util/state-styles hp type angle)
             :on-click #(cond
                          (not= user @state-user) (attack id)
                          selected (deselect id)
@@ -158,18 +148,18 @@
    [entities]])
 
 (defn mount-root []
-  (reagent/render [game-page] (.getElementById js/document "app")))
+  (r/render [game-page] (.getElementById js/document "app")))
 
 (defn core-loop-handler [time]
   (doseq [[id {:keys [target position]}] @state-entities]
     (if target
-      (let [{:keys [position angle]} (interpolate position target (* time marine-velocity))]
+      (let [{:keys [position angle]} (util/interpolate position target (* time marine-velocity))]
         (if (and position angle)
           (do
-            (reset! (cursor state-entities [id :position]) position)
-            (reset! (cursor state-entities [id :angle]) angle)))))))
+            (reset! (r/cursor state-entities [id :position]) position)
+            (reset! (r/cursor state-entities [id :angle]) angle)))))))
 
-(def current-time (atom nil))
+(def current-time (r/atom nil))
 
 (defn core-loop [time]
   (let [prev-time @current-time]
