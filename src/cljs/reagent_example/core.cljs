@@ -149,12 +149,8 @@
     [:div {:class #{name}
            :style {:width width :height height}
            :on-click (fn [event]
-                       (let [sx (.-scrollX js/window)
-                             sy (.-scrollY js/window)
-                             x (.-clientX event)
-                             y (.-clientY event)]
-                         (move-to {:x (- (+ sx x) 32)
-                                   :y (- (+ sy y) 32)})))}]))
+                       (move-to {:x (- (.-pageX event) 31)
+                                 :y (- (.-pageY event) 32)}))}]))
 
 (defn game-page []
   [:div.game-page
