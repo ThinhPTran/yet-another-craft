@@ -147,16 +147,14 @@
 (defn game-map []
   (let [{:keys [name width height]} @state-map]
     [:div {:class #{name}
-           :style {:width width :height height}}
-     (for [i (range (/ width tile-size))
-           j (range (/ height tile-size))]
-       (let [x (* i tile-size)
-             y (* j tile-size)]
-         ^{:key [i j]} [:div.tile {:style {:top y
-                                           :left x
-                                           :width tile-size
-                                           :height tile-size}
-                                   :on-click #(move-to {:x x :y y})}]))]))
+           :style {:width width :height height}
+           :on-click (fn [event]
+                       (let [sx (.-scrollX js/window)
+                             sy (.-scrollY js/window)
+                             x (.-clientX event)
+                             y (.-clientY event)]
+                         (move-to {:x (- (+ sx x) 32)
+                                   :y (- (+ sy y) 32)})))}]))
 
 (defn game-page []
   [:div.game-page
