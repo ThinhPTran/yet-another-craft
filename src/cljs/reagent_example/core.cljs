@@ -63,7 +63,7 @@
 
 (defn move-to [pos]
   (doseq [e @state-selected]
-    (reset! (r/cursor state [:entities e :target]) (util/select-spawn-point pos))))
+    (reset! (r/cursor state [:entities e :target]) pos)))
 
 (defn harvest [value]
   (swap! state-minerals (partial + value)))
