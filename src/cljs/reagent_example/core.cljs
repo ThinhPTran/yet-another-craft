@@ -20,6 +20,8 @@
 (defonce state-user (r/cursor state [:user]))
 (defonce state-map (r/cursor state [:map]))
 
+(def current-time (r/atom nil))
+
 ;; Utils
 
 (defn look-at
@@ -150,6 +152,8 @@
 (defn mount-root []
   (r/render [game-page] (.getElementById js/document "app")))
 
+;; Game cycle
+
 (defn core-loop-handler [time]
   (doseq [[id {:keys [target position]}] @state-entities]
     (if target
@@ -159,14 +163,14 @@
             (reset! (r/cursor state-entities [id :position]) position)
             (reset! (r/cursor state-entities [id :angle]) angle)))))))
 
-(def current-time (r/atom nil))
-
-(defn core-loop [time]
-  (let [prev-time @current-time]
-    (if prev-time
-      (core-loop-handler (- time prev-time))))
-  (reset! current-time time)
-  (js/requestAnimationFrame core-loop))
+(defn core-loop []
+  (js/requestAnimationFrame
+   (fn [time]
+     (let [prev-time @current-time]
+       (if prev-time
+         (core-loop-handler (- time prev-time))))
+     (reset! current-time time)
+     (core-loop))))
 
 (defn init! []
   (println "started")
@@ -174,4 +178,4 @@
   (reset! state-user "ed")
   (build-command-centre "ed")
   (build-command-centre "ivan")
-  (js/requestAnimationFrame core-loop))
+  (core-loop))
