@@ -4,8 +4,7 @@
             [secretary.core :as secretary :include-macros true]
             [reagent-example.util :as util]
             [chord.client :as chord]
-            [cljs.core.async :refer [<! >! put! take! close!]]
-            [secretary.core :as secretary :refer-macros [defroute]])
+            [cljs.core.async :refer [<! >!]])
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
 (defonce state-minerals (r/atom 0))
@@ -167,10 +166,8 @@
 
 (secretary/set-config! :prefix "#")
 
-(defroute "/:name" {:keys [name] :as params}
-  (login name)
-  (js/console.log (str params))
-  (js/console.log name))
+(secretary/defroute "/:name" {:keys [name] :as params}
+  (login name))
 
 (defn init! []
   (println "started")
