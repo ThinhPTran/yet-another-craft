@@ -26,12 +26,23 @@
 
 ;; Commands
 
+(defn entity-type [entity]
+  (get-in @state-entities [entity :type]))
+
 (defn select [entity]
-  (if (or (contains? @state-selected entity)
-          (some #(not= (get-in @state-entities [entity :type])
-                       (get-in @state-entities [% :type]))
-                @state-selected))
-    (reset! state-selected #{}))
+  (let [type (entity-type entity)
+        not-same-type (some #(not= type (entity-type %)) @state-selected)
+        selected-count (count @state-selected)
+        select-all (and (= selected-count 1) (= (first @state-selected) entity))
+        deselect-all (or (contains? @state-selected entity) not-same-type)]
+    (if select-all
+      (reset! state-selected (->> @state-entities
+                                  (filter #(= @state-user (-> % second :user)))
+                                  (filter #(= type (-> % second :type)))
+                                  (map first)
+                                  set))
+      (when deselect-all
+        (reset! state-selected #{}))))
   (swap! state-selected #(conj % entity)))
 
 (defn execute-command [entity command & {:as params}]
