@@ -84,12 +84,14 @@
   (swap! entities #(update-in % [entity :target] (fn [old] {:x x :y y}))))
 
 (defn handle-commands [username {:keys [command entity x y target] :as msg}]
-  (cond
-    (= command :harvest) (harvest username util/harvest-power)
-    (= command :repair) (repair username entity)
-    (= command :marine) (marine username entity)
-    (= command :attack) (attack username entity target)
-    (= command :move) (move username entity x y)))
+  (let [hp (get-in @entities [entity :hp])]
+    (when hp
+      (cond
+        (= command :harvest) (harvest username util/harvest-power)
+        (= command :repair) (repair username entity)
+        (= command :marine) (marine username entity)
+        (= command :attack) (attack username entity target)
+        (= command :move) (move username entity x y)))))
 
 (defn web-socket-handler [req]
   (with-channel req channel
