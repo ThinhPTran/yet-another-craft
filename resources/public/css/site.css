@@ -48,6 +48,14 @@ a:hover {
     color: lime;
 }
 
+.username {
+    position: absolute;
+    text-align: center;
+    color: white;
+    bottom: 25px;
+    left: 0px;
+}
+
 .hp-bar {
     position: absolute;
     left: 0px;

@@ -69,6 +69,9 @@
   (if (and selected (= type :command-centre))
     [:div.resources "minerals : " @state-minerals]))
 
+(defn username [user width height]
+  [:div.username {:style {:width width :height height}} user])
+
 (defn entity [id data current-user]
   (let [width (-> data :size :x)
         height (-> data :size :y)
@@ -82,10 +85,8 @@
         type (data :type)
         user (data :user)
         commands (data :commands)]
-    [:div.entity {:style {:width width
-                          :height height
-                          :left x
-                          :top y}}
+    [:div.entity {:style {:width width, :height height, :left x, :top y}}
+     [username user width height]
      [hp-bar hp-width]
      [selection selected width height]
      [commands-list id commands selected]
