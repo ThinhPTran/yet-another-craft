@@ -28,11 +28,12 @@
 
 ;; Commands
 
-(defn deselect [entity]
-  (swap! state-selected #(disj % entity)))
-
 (defn select [entity]
-  (reset! state-selected #{})
+  (if (or (contains? @state-selected entity)
+          (some #(not= (get-in @state-entities [entity :type])
+                       (get-in @state-entities [% :type]))
+                @state-selected))
+    (reset! state-selected #{}))
   (swap! state-selected #(conj % entity)))
 
 (defn execute-command [entity command & {:as params}]
@@ -93,7 +94,6 @@
      [:div {:class (util/state-styles hp type angle)
             :on-click #(cond
                          (not= user current-user) (attack id)
-                         selected (deselect id)
                          :else (select id))}]]))
 
 (defn entities []
