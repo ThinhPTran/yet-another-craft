@@ -73,8 +73,13 @@
 
 (defn marine [username entity]
   (println "marine")
-  (when-let [pos (get-in @entities [entity :position])]
-    (swap! entities #(assoc % (util/gen-id) (util/make-marine username pos)))))
+  (let [pos (get-in @entities [entity :position])
+        resources(get-in @minerals [username])]
+    (when (and pos resources (>= resources util/marine-cost))
+      (swap! entities #(assoc % (util/gen-id) (util/make-marine username pos)))
+      (swap! minerals #(update-in % [username] (fn [cur] (- cur util/marine-cost)))))))
+
+(swap! minerals #(update-in % ["edwardo"] (fn [cur] 10)))
 
 (defn attack [username entity target]
   (println "attack"))
@@ -115,16 +120,13 @@
   (let [handler (wrap-defaults #'routes site-defaults)]
     (if (env :dev) (-> handler wrap-exceptions wrap-reload) handler)))
 
-(defn core-loop-handler-impl [time]
-  (util/interpolate-entities time entities))
-
-(defn core-loop-handler []
+(defn core-loop-handler [time]
   (when-let [prev-time @current-time]
-    (core-loop-handler-impl (- (System/currentTimeMillis) prev-time)))
-  (reset! current-time (System/currentTimeMillis)))
+    (util/interpolate-entities (- time prev-time) entities))
+  (reset! current-time time))
 
 (defonce core-loop
   (go
     (loop []
-      (core-loop-handler)
+      (core-loop-handler (System/currentTimeMillis))
       (recur))))

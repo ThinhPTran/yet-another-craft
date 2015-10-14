@@ -119,15 +119,14 @@
 ;; Game cycle
 
 (defn core-loop-handler [time]
-  ;; (util/interpolate-entities (/ time 1000) state-entities)
-  )
+  (when-let [prev-time @current-time]
+    (util/interpolate-entities (- time prev-time) state-entities))
+  (reset! current-time time))
 
 (defn core-loop [channel]
   (js/requestAnimationFrame
    (fn [time]
-     (when-let [prev-time @current-time]
-       (core-loop-handler (- time prev-time)))
-     (reset! current-time time)
+     (core-loop-handler time)
      (go
        (>! channel {:command :ping})
        (let [message (-> channel <! :message)

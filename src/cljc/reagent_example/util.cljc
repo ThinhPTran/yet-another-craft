@@ -2,7 +2,7 @@
 
 (def harvest-power 1)
 (def tile-size 64)
-(def marine-velocity 10.0)
+(def marine-velocity 0.1)
 (def marine-cost 10)
 
 (defn select-spawn-target
