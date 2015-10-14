@@ -58,6 +58,36 @@
   (swap! users #(dissoc channel %))
   (println "socket closed"))
 
+(defn harvest [username value]
+  (println "harvest")
+  (swap! minerals (fn [m] (update-in m [username] (partial + value)))))
+
+(defn repair [username entity]
+  (println "repair")
+  (let [{:keys [hp max-hp]} (@entities entity)
+        resources (@minerals username)]
+    (if (and (< hp max-hp) (> resources 0))
+      (do
+        (swap! minerals (fn [m] (update-in m [username] dec)))
+        (swap! entities (fn [e] (update-in e [entity :hp] inc)))))))
+
+(defn marine [username entity]
+  (println "marine"))
+
+(defn attack [username entity target]
+  (println "attack"))
+
+(defn move [username entity x y]
+  (println "move"))
+
+(defn handle-commands [username {:keys [command entity x y target] :as msg}]
+  (cond
+    (= command :harvest) (harvest username util/harvest-power)
+    (= command :repair) (repair username entity)
+    (= command :marine) (marine username entity)
+    (= command :attack) (attack username entity target)
+    (= command :move) (move username entity x y)))
+
 (defn web-socket-handler [req]
   (with-channel req channel
     (let [username (get-in req [:params :name])]
@@ -66,7 +96,9 @@
       (add-channel channel username)
       (send! channel (pr-str (get-channel-state-initial channel)))
       (on-close channel (fn [status] (remove-channel channel)))
-      (on-receive channel (fn [msg] (send! channel (pr-str (get-channel-state channel))))))))
+      (on-receive channel (fn [msg]
+                            (handle-commands (@users channel) (read-string msg))
+                            (send! channel (pr-str (get-channel-state channel))))))))
 
 (defroutes routes
   (GET "/" [] home-page)

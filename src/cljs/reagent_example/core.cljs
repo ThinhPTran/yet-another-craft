@@ -28,9 +28,6 @@
 
 ;; Commands
 
-(defn add-entity [id e]
-  (swap! state-entities #(assoc % id e)))
-
 (defn deselect [entity]
   (swap! state-selected #(disj % entity)))
 
@@ -38,29 +35,18 @@
   (reset! state-selected #{})
   (swap! state-selected #(conj % entity)))
 
+(defn execute-command [entity command & {:as params}]
+  (go
+    (>! @state-channel {:command command :entity entity})
+    (<! @state-channel)))
+
 (defn attack [id]
-  (swap! (r/cursor state-entities [id :hp]) #(-> % (- 1) (max 0))))
-
-(defn move-to [pos]
   (doseq [e @state-selected]
-    (reset! (r/cursor state-entities [e :target]) pos)))
+    (execute-command e :attack, :target id)))
 
-(defn harvest [value]
-  (swap! state-minerals (partial + value)))
-
-(defn repair [entity]
-  (let [{:keys [hp max-hp]} (@state-entities entity)
-        minerals @state-minerals]
-    (if (and (< hp max-hp) (> minerals 0))
-      (do
-        (swap! state-minerals dec)
-        (swap! (r/cursor state-entities [entity :hp]) inc)))))
-
-(defn execute-command [entity command]
-  (cond
-    (= command :harvest) (harvest util/harvest-power)
-    (= command :marine) nil ;; (build-marine entity)
-    (= command :repair) (repair entity)))
+(defn move [pos]
+  (doseq [e @state-selected]
+    (execute-command e :move, :x (pos :x), :y (pos :y))))
 
 ;; -------------------------
 ;; Views
@@ -121,7 +107,7 @@
     [:div {:class #{name}
            :style {:width width :height height}
            :on-click (fn [event]
-                       (move-to {:x (.-pageX event) :y (.-pageY event)}))}]))
+                       (move {:x (.-pageX event) :y (.-pageY event)}))}]))
 
 (defn game-page []
   [:div.game-page
@@ -143,7 +129,7 @@
        (core-loop-handler channel (- time prev-time)))
      (reset! current-time time)
      (go
-       (>! channel time)
+       (>! channel {:command :ping})
        (let [message (-> channel <! :message)
              minerals (:minerals message)
              entities (:entities message)]
