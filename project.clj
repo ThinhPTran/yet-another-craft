@@ -20,7 +20,8 @@
                  [environ "1.0.1"]
                  [secretary "1.2.3"]
                  [jarohen/chord "0.6.0"]
-                 [org.clojure/tools.reader "0.10.0-alpha1"]]
+                 [org.clojure/tools.reader "0.10.0-alpha1"]
+                 [secretary "1.2.3"]]
 
   :plugins [[lein-environ "1.0.1"]
             [refactor-nrepl "2.0.0-SNAPSHOT"]

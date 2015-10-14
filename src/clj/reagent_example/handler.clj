@@ -111,7 +111,7 @@
                             (send! channel (pr-str (get-channel-state channel))))))))
 
 (defroutes routes
-  (GET "/" [] home-page)
+  (GET "/:name" [] home-page)
   (GET "/ws/:name" [] web-socket-handler)
   (resources "/")
   (not-found "Not Found"))

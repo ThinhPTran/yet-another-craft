@@ -2,13 +2,11 @@
   (:require [reagent.core :as r]
             [reagent.session :as session]
             [secretary.core :as secretary :include-macros true]
-            [goog.events :as events]
             [reagent-example.util :as util]
-            [goog.history.EventType :as EventType]
             [chord.client :as chord]
-            [cljs.core.async :refer [<! >! put! take! close!]])
-  (:require-macros [cljs.core.async.macros :refer [go]])
-  (:import goog.History))
+            [cljs.core.async :refer [<! >! put! take! close!]]
+            [secretary.core :as secretary :refer-macros [defroute]])
+  (:require-macros [cljs.core.async.macros :refer [go]]))
 
 (defonce state-minerals (r/atom 0))
 (defonce state-entities (r/atom {}))
@@ -138,18 +136,30 @@
            (reset! state-entities entities))))
      (core-loop channel))))
 
-(defn init! []
-  (println "started")
+(defn login [username]
   (go
-    (let [{:keys [ws-channel]} (<! (chord/ws-ch "ws://localhost:3000/ws/edwardo"))
+    (let [{:keys [ws-channel]} (<! (chord/ws-ch (str "ws://"
+                                                     (-> js/window .-location .-hostname)
+                                                     ":3000/ws/"
+                                                     username)))
           {:keys [message error]} (<! ws-channel)]
       (if-not error
         (do (reset! state-channel ws-channel)
             (reset! state-entities (:entities message))
             (reset! state-map (:map message))
             (reset! state-minerals (:minerals message))
-            (reset! state-user "edwardo")
-            (js/console.log "Initial state: " (pr-str (:entities message)))
+            (reset! state-user username)
             (mount-root)
             (core-loop ws-channel))
         (js/console.log error)))))
+
+(secretary/set-config! :prefix "#")
+
+(defroute "/:name" {:keys [name] :as params}
+  (login name)
+  (js/console.log (str params))
+  (js/console.log name))
+
+(defn init! []
+  (println "started")
+  (secretary/dispatch! (-> js/window .-location .-pathname)))
