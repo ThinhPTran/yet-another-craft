@@ -7,7 +7,33 @@
             [prone.middleware :refer [wrap-exceptions]]
             [hiccup.core :refer [html]]
             [hiccup.page :refer [include-js include-css]]
-            [environ.core :refer [env]]))
+            [environ.core :refer [env]]
+            [reagent-example.util :as util]
+            [clojure.tools.reader :as reader]))
+
+(defonce state (atom nil))
+(def current-time (atom nil))
+(defonce users (atom {}))
+
+;; (defn build-marine [parent]
+;;   (if (>= @state-minerals marine-cost)
+;;     (let [{:keys [user position]} (@state-entities parent)
+;;           new-pos (util/select-spawn-point position {:x -64 :y -64})
+;;           new-angle (rand 360)]
+;;       (swap! state-minerals #(- % marine-cost))
+;;       (add-entity (util/gen-id) (util/make-marine user new-pos new-angle)))))
+
+;; (defn build-command-centre [user]
+;;   (let [id (util/gen-id)
+;;         pos (util/select-centre-pos @state-map)
+;;         data (util/make-command-centre user pos)]
+;;     (add-entity id data)
+;;     (if (= user @state-user)
+;;       (look-at pos))
+;;     (build-marine id)
+;;     (build-marine id)
+;;     (build-marine id)
+;;     [id data]))
 
 (def home-page
   (html
@@ -27,14 +53,23 @@
 
 (defn web-socket-handler [req]
   (with-channel req channel
-    (println "socket opened")
-    (on-close channel (fn [status] (println "socket closed")))
-    (on-receive channel (fn [data]
-                          (send! channel (str "echo: " data))))))
+    (let [username (get-in req [:params :name])]
+      (println "socket opened")
+      (println username)
+      (send! channel (pr-str (util/make-state username)))
+      (swap! users #(assoc % (pr-str channel) {}))
+      (on-close channel (fn [status]
+                          (swap! users #(dissoc % (pr-str channel)))
+                          (println "socket closed")
+                          ))
+      (on-receive channel (fn [data]
+                            (send! channel (pr-str {:state @state
+                                                    :users @users
+                                                    :echo data})))))))
 
 (defroutes routes
   (GET "/" [] home-page)
-  (GET "/ws" [] web-socket-handler)
+  (GET "/:name" [] web-socket-handler)
   (resources "/")
   (not-found "Not Found"))
 

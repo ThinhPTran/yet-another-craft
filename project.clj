@@ -6,6 +6,7 @@
 
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/clojurescript "1.7.122" :scope "provided"]
+                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [ring/ring-devel "1.4.0"]
                  [ring/ring-core "1.4.0"]
                  [ring/ring-defaults "0.1.5"]
@@ -18,7 +19,8 @@
                  [hiccup "1.0.5"]
                  [environ "1.0.1"]
                  [secretary "1.2.3"]
-                 [jarohen/chord "0.6.0"]]
+                 [jarohen/chord "0.6.0"]
+                 [org.clojure/tools.reader "0.10.0-alpha1"]]
 
   :plugins [[lein-environ "1.0.1"]
             [refactor-nrepl "2.0.0-SNAPSHOT"]
@@ -45,7 +47,6 @@
    {"resources/public/css/site.min.css" "resources/public/css/site.css"}}
 
   :cljsbuild {:builds {:app {:source-paths ["src/cljs" "src/cljc"]
-                             :figwheel {:websocket-host "192.168.1.66"}
                              :compiler {:output-to     "resources/public/js/app.js"
                                         :output-dir    "resources/public/js/out"
                                         :asset-path   "js/out"
@@ -53,10 +54,15 @@
                                         :pretty-print  true}}}}
 
   :figwheel {:http-server-root "public"
-             :server-port 3449
+             :websocket-host "localhost"
+             :server-port 3000
              :nrepl-port 7002
+             :nrepl-middleware ["cider.nrepl/cider-middleware"
+                                "refactor-nrepl.middleware/wrap-refactor"
+                                "cemerick.piggieback/wrap-cljs-repl"]
              :css-dirs ["resources/public/css"]
-             :ring-handler reagent-example.handler/app}
+             :ring-handler reagent-example.handler/app
+             }
 
   :profiles {:dev {:repl-options {:init-ns reagent-example.repl
                                   :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl
@@ -90,7 +96,6 @@
                    :env {:dev true}
 
                    :cljsbuild {:builds {:app {:source-paths ["env/dev/cljs"]
-                                              :figwheel {:websocket-host "192.168.1.66"}
                                               :compiler {:main "reagent-example.dev"
                                                          :source-map true}}}}}
 

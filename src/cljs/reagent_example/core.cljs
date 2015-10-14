@@ -5,22 +5,21 @@
             [goog.events :as events]
             [reagent-example.util :as util]
             [goog.history.EventType :as EventType]
-            [chord.client :as chord])
+            [chord.client :as chord]
+            [cljs.core.async :refer [<! >! put! take! close!]])
+  (:require-macros [cljs.core.async.macros :refer [go]])
   (:import goog.History))
 
-(def marine-cost 10)
-(def marine-velocity 0.07)
-(def tile-size 64)
-(def harvest-power 1)
+(defonce state (r/atom {}))
+(defonce state-minerals (r/atom 0))
+(defonce state-entities (r/atom {}))
+(defonce state-selected (r/atom #{}))
+(defonce state-user (r/atom ""))
+(defonce state-map (r/atom nil))
+(defonce state-channel (r/atom nil))
 
-(defonce state (r/atom (util/make-state)))
-(defonce state-minerals (r/cursor state [:resources :minerals]))
-(defonce state-entities (r/cursor state [:entities]))
-(defonce state-selected (r/cursor state [:selected]))
-(defonce state-user (r/cursor state [:user]))
-(defonce state-map (r/cursor state [:map]))
-
-(def current-time (r/atom nil))
+(def current-time (r/atom 0))
+(def network-time (r/atom 0))
 
 ;; Utils
 
@@ -40,32 +39,12 @@
   (reset! state-selected #{})
   (swap! state-selected #(conj % entity)))
 
-(defn build-marine [parent]
-  (if (>= @state-minerals marine-cost)
-    (let [{:keys [user position]} (@state-entities parent)
-          new-pos (util/select-spawn-point position {:x -64 :y -64})
-          new-angle (rand 360)]
-      (swap! state-minerals #(- % marine-cost))
-      (add-entity (util/gen-id) (util/make-marine user new-pos new-angle)))))
-
-(defn build-command-centre [user]
-  (let [id (util/gen-id)
-        pos (util/select-centre-pos @state-map)
-        data (util/make-command-centre user pos)]
-    (add-entity id data)
-    (if (= user @state-user)
-      (look-at pos))
-    (build-marine id)
-    (build-marine id)
-    (build-marine id)
-    [id data]))
-
 (defn attack [id]
   (swap! (r/cursor state-entities [id :hp]) #(-> % (- 1) (max 0))))
 
 (defn move-to [pos]
   (doseq [e @state-selected]
-    (reset! (r/cursor state [:entities e :target]) pos)))
+    (reset! (r/cursor state-entities [e :target]) pos)))
 
 (defn harvest [value]
   (swap! state-minerals (partial + value)))
@@ -80,8 +59,8 @@
 
 (defn execute-command [entity command]
   (cond
-    (= command :harvest) (harvest harvest-power)
-    (= command :marine) (build-marine entity)
+    (= command :harvest) (harvest util/harvest-power)
+    (= command :marine) nil ;; (build-marine entity)
     (= command :repair) (repair entity)))
 
 ;; -------------------------
@@ -105,7 +84,7 @@
   (if (and selected (= type :command-centre))
     [:div.resources "minerals : " @state-minerals]))
 
-(defn entity [[id data]]
+(defn entity [id data current-user]
   (let [width (-> data :size :x)
         height (-> data :size :y)
         x (-> data :position :x)
@@ -128,21 +107,22 @@
      [resources selected type]
      [:div {:class (util/state-styles hp type angle)
             :on-click #(cond
-                         (not= user @state-user) (attack id)
+                         (not= user current-user) (attack id)
                          selected (deselect id)
                          :else (select id))}]]))
 
 (defn entities []
-  [:div (for [[id data] @state-entities]
-          ^{:key id} [entity [id data]])])
+  (let [entities @state-entities
+        current-user @state-user]
+    [:div (for [[id data] entities]
+            ^{:key id} [entity id data current-user])]))
 
 (defn game-map []
   (let [{:keys [name width height]} @state-map]
     [:div {:class #{name}
            :style {:width width :height height}
            :on-click (fn [event]
-                       (move-to {:x (- (.-pageX event) 31)
-                                 :y (- (.-pageY event) 32)}))}]))
+                       (move-to {:x (.-pageX event) :y (.-pageY event)}))}]))
 
 (defn game-page []
   [:div.game-page
@@ -154,28 +134,32 @@
 
 ;; Game cycle
 
-(defn core-loop-handler [time]
-  (doseq [[id {:keys [target position]}] @state-entities]
-    (if target
-      (let [{:keys [position angle]} (util/interpolate position target (* time marine-velocity))]
-        (if (and position angle)
-          (do
-            (reset! (r/cursor state-entities [id :position]) position)
-            (reset! (r/cursor state-entities [id :angle]) angle)))))))
+(defn core-loop-handler [channel time]
+  (util/interpolate-entities time state-entities))
 
-(defn core-loop []
+(defn core-loop [channel]
   (js/requestAnimationFrame
    (fn [time]
-     (let [prev-time @current-time]
-       (if prev-time
-         (core-loop-handler (- time prev-time))))
+     (when-let [prev-time @current-time]
+       (core-loop-handler channel (- time prev-time)))
      (reset! current-time time)
-     (core-loop))))
+     (go
+       (>! channel time)
+       (-> channel <! :message :echo))
+     (core-loop channel))))
 
 (defn init! []
   (println "started")
-  (mount-root)
-  (reset! state-user "ed")
-  (build-command-centre "ed")
-  (build-command-centre "ivan")
-  (core-loop))
+  (go
+    (let [{:keys [ws-channel]} (<! (chord/ws-ch "ws://192.168.1.66:3000/edwardo"))
+          {:keys [message error]} (<! ws-channel)]
+      (if-not error
+        (do (reset! state-channel ws-channel)
+            (reset! state-entities (:entities message))
+            (reset! state-map (:map message))
+            (reset! state-minerals (:minerals message))
+            (reset! state-user "edwardo")
+            (js/console.log "Initial state: " (pr-str (:entities message)))
+            (mount-root)
+            (core-loop ws-channel))
+        (js/console.log error)))))

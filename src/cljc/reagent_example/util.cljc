@@ -1,5 +1,10 @@
 (ns reagent-example.util)
 
+(def harvest-power 1)
+(def tile-size 64)
+(def marine-velocity 0.07)
+(def marine-cost 10)
+
 (defn make-marine [user {:keys [x y]} angle]
   {:hp 15
    :max-hp 15
@@ -22,9 +27,24 @@
    :target nil
    :user user})
 
+(defn make-map []
+  {:name "blood-bath"
+   :width 2048
+   :height 2048})
+
 (defn select-centre-pos [{:keys [width height]}]
   {:x (+ 200 (rand (- width 400)))
    :y (+ 200 (rand (- height 400)))})
+
+(defn make-state [u]
+  {:minerals 100
+   :entities {:a (make-command-centre u (select-centre-pos {:width 2048 :height 2048}))
+              :b (make-command-centre u (select-centre-pos {:width 2048 :height 2048}))
+              :c (make-command-centre u (select-centre-pos {:width 2048 :height 2048}))
+              :d (make-marine u (select-centre-pos {:width 2048 :height 2048}) 0)
+              :e (make-marine u (select-centre-pos {:width 2048 :height 2048}) 0)
+              :f (make-marine u (select-centre-pos {:width 2048 :height 2048}) 0)}
+   :map (make-map)})
 
 (defn select-spawn-point
   ([{:keys [x y]} {offset-x :x offset-y :y}]
@@ -43,17 +63,11 @@
        :angle (+ 360 90 (/ (* sign (Math/acos nx)) 3.1415926))}
       nil)))
 
-(defn make-map []
-  {:name "blood-bath"
-   :width 2048
-   :height 2048})
-
-(defn make-state []
-  {:resources {:minerals 100}
-   :entities {}
-   :selected #{}
-   :user nil
-   :map (make-map)})
+(defn interpolate-entities [time entities]
+  (doseq [[id {:keys [target position]}] @entities]
+    (if target
+      (when-let [pos (interpolate position target (* time marine-velocity))]
+        (swap! entities (fn [es] (update-in es [id] #(merge % pos))))))))
 
 (defn marine-style [hp angle-id]
   (cond
