@@ -17,12 +17,6 @@
 (def current-time (r/atom 0))
 (def network-time (r/atom 0))
 
-;; Utils
-
-(defn look-at
-  ([{:keys [x y]}]
-   (.scrollTo js/window (- x 100) (- y 100))))
-
 ;; Commands
 
 (defn entity-type [entity]
@@ -147,6 +141,18 @@
            (reset! state-entities entities))))
      (core-loop channel))))
 
+(defn look-at
+  ([{:keys [x y]}]
+   (.scrollTo js/window (- x 128) (- y 128))))
+
+(defn setup-camera [username]
+  (when-let [look-pos (->> @state-entities
+                           (filter #(= username (-> % second :user)))
+                           first
+                           second
+                           :position)]
+    (look-at look-pos)))
+
 (defn login [username]
   (go
     (let [{:keys [ws-channel]} (<! (chord/ws-ch (str "ws://"
@@ -161,6 +167,7 @@
             (reset! state-minerals (:minerals message))
             (reset! state-user username)
             (mount-root)
+            (setup-camera username)
             (core-loop ws-channel))
         (js/console.log error)))))
 

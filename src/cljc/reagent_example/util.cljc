@@ -3,7 +3,7 @@
 (def harvest-power 1)
 (def tile-size 64)
 (def marine-velocity 0.1)
-(def marine-cost 10)
+(def marine-cost 20)
 
 (defn select-spawn-target
   ([{:keys [x y]} {offset-x :x offset-y :y}]
