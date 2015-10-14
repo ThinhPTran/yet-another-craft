@@ -80,11 +80,12 @@
       (swap! minerals #(update-in % [username] (fn [cur] (- cur util/marine-cost)))))))
 
 (defn attack [username entity target]
-  (println "attack"))
+  (println "attack")
+  (swap! entities #(update-in % [entity :target] (fn [old] (merge old {:id target})))))
 
 (defn move [username entity x y]
   (println "move")
-  (swap! entities #(update-in % [entity :target] (fn [old] {:x x :y y}))))
+  (swap! entities #(update-in % [entity :target] (fn [old] (merge old {:x x :y y})))))
 
 (defn handle-commands [username {:keys [command entity x y target] :as msg}]
   (let [hp (get-in @entities [entity :hp])]
