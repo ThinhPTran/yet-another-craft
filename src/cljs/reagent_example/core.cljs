@@ -92,9 +92,7 @@
      [commands-list id commands selected]
      [resources selected type]
      [:div {:class (util/state-styles hp type angle)
-            :on-click #(cond
-                         (not= user current-user) (attack id)
-                         :else (select id))}]]))
+            :on-click #(if (= user current-user) (select id) (attack id))}]]))
 
 (defn entities []
   (let [entities @state-entities
