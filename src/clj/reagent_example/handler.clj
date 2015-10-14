@@ -70,7 +70,7 @@
 
 (defroutes routes
   (GET "/" [] home-page)
-  (GET "/:name" [] web-socket-handler)
+  (GET "/ws/:name" [] web-socket-handler)
   (resources "/")
   (not-found "Not Found"))
 

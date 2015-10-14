@@ -156,7 +156,7 @@
 (defn init! []
   (println "started")
   (go
-    (let [{:keys [ws-channel]} (<! (chord/ws-ch "ws://localhost:3000/edwardo"))
+    (let [{:keys [ws-channel]} (<! (chord/ws-ch "ws://localhost:3000/ws/edwardo"))
           {:keys [message error]} (<! ws-channel)]
       (if-not error
         (do (reset! state-channel ws-channel)
