@@ -38,16 +38,17 @@
 
 (defn execute-command [entity command & {:as params}]
   (go
-    (>! @state-channel {:command command :entity entity})
+    (>! @state-channel (merge {:command command :entity entity} params))
     (<! @state-channel)))
 
-(defn attack [id]
+(defn attack [target]
   (doseq [e @state-selected]
-    (execute-command e :attack, :target id)))
+    (execute-command e :attack, :target target)))
 
 (defn move [pos]
   (doseq [e @state-selected]
-    (execute-command e :move, :x (pos :x), :y (pos :y))))
+    (let [rpos (util/select-spawn-target pos {:x 0 :y 0})]
+      (execute-command e :move, :x (rpos :x), :y (rpos :y)))))
 
 ;; -------------------------
 ;; Views
@@ -117,14 +118,15 @@
 
 ;; Game cycle
 
-(defn core-loop-handler [channel time]
-  (util/interpolate-entities time state-entities))
+(defn core-loop-handler [time]
+  ;; (util/interpolate-entities (/ time 1000) state-entities)
+  )
 
 (defn core-loop [channel]
   (js/requestAnimationFrame
    (fn [time]
      (when-let [prev-time @current-time]
-       (core-loop-handler channel (- time prev-time)))
+       (core-loop-handler (- time prev-time)))
      (reset! current-time time)
      (go
        (>! channel {:command :ping})

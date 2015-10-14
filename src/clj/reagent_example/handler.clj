@@ -9,19 +9,19 @@
             [hiccup.page :refer [include-js include-css]]
             [environ.core :refer [env]]
             [reagent-example.util :as util]
-            [clojure.tools.reader :as reader]))
+            [clojure.tools.reader :as reader]
+            [clojure.core.async :refer [go]]))
 
 (defonce entities (atom {}))
 (defonce users (atom {}))
 (defonce minerals (atom {}))
 
-(defn reset []
-  (reset! entities {})
-  (reset! users {})
-  (reset! minerals {}))
-
 (comment
-  (reset)
+  (do
+    (reset! entities {})
+    (reset! users {})
+    (reset! minerals {})
+    )
   )
 
 (def current-time (atom 0))
@@ -72,13 +72,16 @@
         (swap! entities (fn [e] (update-in e [entity :hp] inc)))))))
 
 (defn marine [username entity]
-  (println "marine"))
+  (println "marine")
+  (when-let [pos (get-in @entities [entity :position])]
+    (swap! entities #(assoc % (util/gen-id) (util/make-marine username pos)))))
 
 (defn attack [username entity target]
   (println "attack"))
 
 (defn move [username entity x y]
-  (println "move"))
+  (println "move")
+  (swap! entities #(update-in % [entity :target] (fn [old] {:x x :y y}))))
 
 (defn handle-commands [username {:keys [command entity x y target] :as msg}]
   (cond
@@ -109,3 +112,17 @@
 (def app
   (let [handler (wrap-defaults #'routes site-defaults)]
     (if (env :dev) (-> handler wrap-exceptions wrap-reload) handler)))
+
+(defn core-loop-handler-impl [time]
+  (util/interpolate-entities time entities))
+
+(defn core-loop-handler []
+  (when-let [prev-time @current-time]
+    (core-loop-handler-impl (- (System/currentTimeMillis) prev-time)))
+  (reset! current-time (System/currentTimeMillis)))
+
+(defonce core-loop
+  (go
+    (loop []
+      (core-loop-handler)
+      (recur))))
