@@ -79,8 +79,6 @@
       (swap! entities #(assoc % (util/gen-id) (util/make-marine username pos)))
       (swap! minerals #(update-in % [username] (fn [cur] (- cur util/marine-cost)))))))
 
-(swap! minerals #(update-in % ["edwardo"] (fn [cur] 10)))
-
 (defn attack [username entity target]
   (println "attack"))
 
