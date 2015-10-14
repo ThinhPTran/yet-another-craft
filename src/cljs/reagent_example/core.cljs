@@ -10,7 +10,6 @@
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:import goog.History))
 
-(defonce state (r/atom {}))
 (defonce state-minerals (r/atom 0))
 (defonce state-entities (r/atom {}))
 (defonce state-selected (r/atom #{}))
