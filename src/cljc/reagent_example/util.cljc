@@ -91,6 +91,15 @@
 (defn gen-id []
   (rand 1000000000))
 
+(defn make-initial-units [username]
+  (->> (let [pos (select-centre-pos {:width 2048 :height 2048})]
+         [(make-command-centre username pos)
+          (make-marine username (select-spawn-point pos {:x -64 :y -64}) 0)
+          (make-marine username (select-spawn-point pos {:x -64 :y -64}) 0)
+          (make-marine username (select-spawn-point pos {:x -64 :y -64}) 0)])
+       (map #(vector (gen-id) %))
+       (into (hash-map))))
+
 ;; (defn gen-frames [name animation time steps count x1 y1 x2 y2 width height]
 ;;   (for [i (range count)]
 ;;     (let [offset-x (* width i)

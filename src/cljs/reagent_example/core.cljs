@@ -144,13 +144,19 @@
      (reset! current-time time)
      (go
        (>! channel time)
-       (-> channel <! :message :echo))
+       (let [message (-> channel <! :message)
+             minerals (:minerals message)
+             entities (:entities message)]
+         (when minerals
+           (reset! state-minerals minerals))
+         (when entities
+           (reset! state-entities entities))))
      (core-loop channel))))
 
 (defn init! []
   (println "started")
   (go
-    (let [{:keys [ws-channel]} (<! (chord/ws-ch "ws://192.168.1.66:3000/edwardo"))
+    (let [{:keys [ws-channel]} (<! (chord/ws-ch "ws://localhost:3000/edwardo"))
           {:keys [message error]} (<! ws-channel)]
       (if-not error
         (do (reset! state-channel ws-channel)
