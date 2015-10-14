@@ -42,7 +42,7 @@ a:hover {
 .resources {
     position: absolute;
     right: 0px;
-    top: -25px;
+    bottom: -25px;
     width: 120px;
     text-align: center;
     color: lime;
