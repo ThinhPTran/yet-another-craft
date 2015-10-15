@@ -50,10 +50,10 @@
   (merge (get-channel-state channel) {:map (util/make-map)}))
 
 (defn add-channel [channel username]
+  (swap! users #(assoc % channel username))
   (when-not (@minerals username)
-      (swap! entities #(merge % (util/make-initial-units username)))
-      (swap! users #(assoc % channel username))
-      (swap! minerals #(assoc % username 100))))
+    (swap! entities #(merge % (util/make-initial-units username)))
+    (swap! minerals #(assoc % username 100))))
 
 (defn remove-channel [channel]
   (swap! users #(dissoc % channel))
