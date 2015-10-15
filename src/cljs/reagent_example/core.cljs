@@ -3,6 +3,7 @@
             [reagent.session :as session]
             [secretary.core :as secretary :include-macros true]
             [reagent-example.util :as util]
+            [reagent-example.view :as view]
             [chord.client :as chord]
             [cljs.core.async :refer [<! >!]])
   (:require-macros [cljs.core.async.macros :refer [go]]))
@@ -38,85 +39,25 @@
         (reset! state-selected #{}))))
   (swap! state-selected #(conj % entity)))
 
-(defn execute-command [entity command & {:as params}]
+(defn command [entity command & {:as params}]
   (go
     (>! @state-channel (merge {:command command :entity entity} params))
     (<! @state-channel)))
 
 (defn attack [target]
   (doseq [e @state-selected]
-    (execute-command e :attack, :target target)))
+    (command e :attack, :target target)))
 
 (defn move [pos]
   (doseq [e @state-selected]
     (let [rpos (util/select-spawn-target pos {:x 0 :y 0})]
-      (execute-command e :move, :x (rpos :x), :y (rpos :y)))))
-
-;; -------------------------
-;; Views
-
-(defn hp-bar [hp-width]
-  [:div.hp-bar {:style {:width hp-width}}])
-
-(defn selection [selected width height]
-  [:div.selection {:style {:display (if selected "initial" "none")
-                           :width width
-                           :height height}}])
-
-(defn commands-list [entity commands selected]
-  [:div.commands {:style {:display (if selected "initial" "none")}}
-   (for [command commands]
-     ^{:key command } [:div {:class (str "command-" (name command))
-                             :on-click #(execute-command entity command)}])])
-
-(defn resources [selected type]
-  (if (and selected (= type :command-centre))
-    [:div.resources "minerals : " @state-minerals]))
-
-(defn username [user width height]
-  [:div.username {:style {:width width :height height}} user])
-
-(defn entity [id data current-user]
-  (let [width (-> data :size :x)
-        height (-> data :size :y)
-        x (-> data :position :x)
-        y (-> data :position :y)
-        angle (data :angle)
-        hp (data :hp)
-        max-hp (data :max-hp)
-        hp-width (* (/ hp max-hp) width)
-        selected (@state-selected id)
-        type (data :type)
-        user (data :user)
-        commands (data :commands)]
-    [:div.entity {:style {:width width, :height height, :left x, :top y}}
-     [username user width height]
-     [hp-bar hp-width]
-     [selection selected width height]
-     [commands-list id commands selected]
-     [resources selected type]
-     [:div {:class (util/state-styles hp type angle)
-            :on-click #(if (= user current-user) (select id) (attack id))}]]))
-
-(defn entities []
-  (let [entities @state-entities
-        current-user @state-user]
-    [:div (for [[id data] entities]
-            ^{:key id} [entity id data current-user])]))
-
-(defn game-map []
-  (let [{:keys [name width height]} @state-map]
-    [:div {:class #{name}
-           :style {:width width :height height}
-           :on-click #(move {:x (.-pageX %) :y (.-pageY %)})}]))
-
-(defn game-page []
-  [:div.game-page
-   [game-map]
-   [entities]])
+      (command e :move, :x (rpos :x), :y (rpos :y)))))
 
 (defn mount-root []
-  (r/render [game-page] (.getElementById js/document "app")))
+  (r/render [view/game-page
+             move attack select command
+             state-map state-entities state-minerals state-selected state-user]
+            (.getElementById js/document "app")))
 
 ;; Game cycle
 
