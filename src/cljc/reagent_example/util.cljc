@@ -4,6 +4,7 @@
 (def tile-size 64)
 (def marine-velocity 0.1)
 (def marine-cost 20)
+(def marine-range 128)
 
 (defn select-spawn-target
   ([{:keys [x y]} {offset-x :x offset-y :y}]
@@ -31,7 +32,7 @@
    :size {:x 120 :y 120}
    :type :command-centre
    :commands #{:harvest :marine :repair}
-   :target nil
+   :target {}
    :user user})
 
 (defn make-map []
@@ -42,6 +43,16 @@
 (defn select-centre-pos [{:keys [width height]}]
   {:x (+ 200 (rand (- width 400)))
    :y (+ 200 (rand (- height 400)))})
+
+(defn destruct-vector [{:keys [x y] :as from} {to-x :x, to-y :y, :as to}]
+  (let [dx (- to-x x)
+        dy (- to-y y)
+        distance (Math/sqrt (+ (* dx dx) (* dy dy)))
+        nx (/ dx distance)
+        ny (/ dy distance)]
+    {:dx dx :dy dy
+     :nx nx :ny ny
+     :distance distance}))
 
 (defn interpolate [{:keys [x y] :as pos} {tx :x ty :y} delta]
   (let [{dx :x dy :y} {:x (- tx x) :y (- ty y)}
@@ -54,8 +65,8 @@
       nil)))
 
 (defn interpolate-entities [time entities]
-  (doseq [[id {:keys [target position]}] @entities]
-    (if target
+  (doseq [[id {{tx :x ty :y :as target} :target position :position}] @entities]
+    (if (and tx ty)
       (when-let [pos (interpolate position target (* time marine-velocity))]
         (swap! entities (fn [es] (update-in es [id] #(merge % pos))))))))
 
