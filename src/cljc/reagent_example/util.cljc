@@ -100,3 +100,6 @@
           (make-marine username pos)])
        (map #(vector (gen-id) %))
        (into (hash-map))))
+
+(defn socket-url [host user]
+  (str "ws://" host ":3000/ws/" user))

@@ -108,8 +108,7 @@
   (let [{:keys [name width height]} @state-map]
     [:div {:class #{name}
            :style {:width width :height height}
-           :on-click (fn [event]
-                       (move {:x (.-pageX event) :y (.-pageY event)}))}]))
+           :on-click #(move {:x (.-pageX %) :y (.-pageY %)})}]))
 
 (defn game-page []
   [:div.game-page
@@ -155,10 +154,8 @@
 
 (defn login [username]
   (go
-    (let [{:keys [ws-channel]} (<! (chord/ws-ch (str "ws://"
-                                                     (-> js/window .-location .-hostname)
-                                                     ":3000/ws/"
-                                                     username)))
+    (let [ws-url (util/socket-url (-> js/window .-location .-hostname) username)
+          {:keys [ws-channel]} (<! (chord/ws-ch ws-url))
           {:keys [message error]} (<! ws-channel)]
       (if-not error
         (do (reset! state-channel ws-channel)
