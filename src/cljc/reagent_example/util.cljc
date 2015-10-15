@@ -6,12 +6,12 @@
 (def marine-cost 20)
 (def marine-range 128)
 
-(defn select-spawn-target
+(defn distort-point
   ([{:keys [x y]} {offset-x :x offset-y :y}]
    {:x (+ offset-x 32 (- x (rand 64)))
     :y (+ offset-y 32 (- y (rand 64)))})
   ([pos]
-   (select-spawn-target pos {:x 0 :y 0})))
+   (distort-point pos {:x 0 :y 0})))
 
 (defn make-marine [user {:keys [x y] :as pos}]
   {:hp 15
@@ -21,7 +21,7 @@
    :size {:x 64 :y 64}
    :type :marine
    :commands #{}
-   :target (select-spawn-target pos {:x -64 :y -64})
+   :target (distort-point pos {:x -64 :y -64})
    :user user})
 
 (defn make-command-centre [user {:keys [x y]}]

@@ -61,7 +61,7 @@
   (let [{:keys [name width height]} @state-map]
     [:div {:class #{name}
            :style {:width width :height height}
-           :on-click #(move {:x (.-pageX %) :y (.-pageY %)})}]))
+           :on-click #(move %)}]))
 
 (defn game-page [move attack select execute-command
                  state-map state-entities state-minerals state-selected state-user]

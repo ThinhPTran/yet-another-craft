@@ -48,9 +48,9 @@
   (doseq [e @state-selected]
     (execute-command e :attack, :target target)))
 
-(defn move [pos]
+(defn move [event]
   (doseq [e @state-selected]
-    (let [rpos (util/select-spawn-target pos {:x 0 :y 0})]
+    (let [rpos (util/distort-point {:x (.-pageX event) :y (.-pageY event)})]
       (execute-command e :move, :x (rpos :x), :y (rpos :y)))))
 
 (defn mount-root []
