@@ -122,36 +122,9 @@
 
 (defn core-loop-handler [time]
   (when-let [prev-time @current-time]
-    (util/interpolate-entities (- time prev-time) entities)
-    (doseq [[entity-id {{target-id :id, move-x :x, move-y :y} :target
-                        {:keys [x y] :as position} :position}] @entities]
-      (when target-id
-        (let [{target-pos :position hp :hp :as target} (@entities target-id)]
-          (if target
-            (let [{:keys [distance nx ny] } (util/destruct-vector position target-pos)]
-              (if (< distance util/marine-range)
-                (do
-                  (when (>= 1 hp)
-                    (swap! entities #(update-in % [entity-id :target] dissoc target-id)))
-                  (swap! entities #(update-in % [target-id :hp]
-                                              (fn [cur-hp]
-                                                (-> cur-hp
-                                                    (- (-> time
-                                                           (- prev-time)
-                                                           (/ 1000)))
-                                                    (max 0))))))
-                (swap! entities #(update-in % [entity-id :target]
-                                            (fn [old]
-                                              (merge old {:x (-> distance
-                                                                 (- util/marine-range)
-                                                                 (+ 10)
-                                                                 (* nx)
-                                                                 (+ x))
-                                                          :y (-> distance
-                                                                 (- util/marine-range)
-                                                                 (+ 10)
-                                                                 (* ny)
-                                                                 (+ y))})))))))))))
+    (let [delta (- time prev-time)]
+      (util/interpolate-entities delta entities)
+      (util/process-ai delta entities)))
   (reset! current-time time))
 
 (defonce core-loop

@@ -25,8 +25,8 @@
    :user user})
 
 (defn make-command-centre [user {:keys [x y]}]
-  {:hp 30
-   :max-hp 40
+  {:hp 250
+   :max-hp 300
    :position  {:x x :y y}
    :angle 0
    :size {:x 120 :y 120}
@@ -103,3 +103,34 @@
 
 (defn socket-url [host user]
   (str "ws://" host ":3000/ws/" user))
+
+(defn process-ai [delta entities]
+  (doseq [[entity-id {{target-id :id, move-x :x, move-y :y} :target
+                      {:keys [x y] :as position} :position}] @entities]
+    (when target-id
+      (let [{target-pos :position hp :hp :as target} (@entities target-id)]
+        (if target
+          (let [{:keys [distance nx ny] } (destruct-vector position target-pos)]
+            (if (< distance marine-range)
+              (do
+                (when (>= 1 hp)
+                  (swap! entities #(update-in % [entity-id :target] dissoc target-id)))
+                (swap! entities #(update-in % [target-id :hp]
+                                            (fn [cur-hp]
+                                              (-> cur-hp
+                                                  (- (-> delta
+                                                         (/ 1000)
+                                                         (* 5)))
+                                                  (max 0))))))
+              (swap! entities #(update-in % [entity-id :target]
+                                          (fn [old]
+                                            (merge old {:x (-> distance
+                                                               (- marine-range)
+                                                               (+ 10)
+                                                               (* nx)
+                                                               (+ x))
+                                                        :y (-> distance
+                                                               (- marine-range)
+                                                               (+ 10)
+                                                               (* ny)
+                                                               (+ y))})))))))))))
