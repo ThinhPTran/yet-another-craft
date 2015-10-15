@@ -5,11 +5,12 @@
 (def marine-velocity 0.1)
 (def marine-cost 20)
 (def marine-range 128)
+(def marine-auto-range 256)
 
 (defn distort-point
   ([{:keys [x y]} {offset-x :x offset-y :y}]
-   {:x (+ offset-x 32 (- x (rand 64)))
-    :y (+ offset-y 32 (- y (rand 64)))})
+   {:x (+ offset-x 48 (- x (rand 96)))
+    :y (+ offset-y 48 (- y (rand 96)))})
   ([pos]
    (distort-point pos {:x 0 :y 0})))
 
@@ -106,31 +107,44 @@
 
 (defn process-ai [delta entities]
   (doseq [[entity-id {{target-id :id, move-x :x, move-y :y} :target
-                      {:keys [x y] :as position} :position}] @entities]
-    (when target-id
-      (let [{target-pos :position hp :hp :as target} (@entities target-id)]
+                      {:keys [x y] :as position} :position
+                      user :user
+                      hp :hp
+                      type :type}] @entities]
+    (when (= type :marine)
+      (let [{target-pos :position target-hp :hp :as target} (@entities target-id)]
         (if target
-          (let [{:keys [distance nx ny] } (destruct-vector position target-pos)]
-            (if (< distance marine-range)
-              (do
-                (when (>= 1 hp)
-                  (swap! entities #(update-in % [entity-id :target] dissoc target-id)))
-                (swap! entities #(update-in % [target-id :hp]
-                                            (fn [cur-hp]
-                                              (-> cur-hp
-                                                  (- (-> delta
-                                                         (/ 1000)
-                                                         (* 5)))
-                                                  (max 0))))))
-              (swap! entities #(update-in % [entity-id :target]
-                                          (fn [old]
-                                            (merge old {:x (-> distance
-                                                               (- marine-range)
-                                                               (+ 10)
-                                                               (* nx)
-                                                               (+ x))
-                                                        :y (-> distance
-                                                               (- marine-range)
-                                                               (+ 10)
-                                                               (* ny)
-                                                               (+ y))})))))))))))
+          (if (or (= target-hp 0) (= 0 hp))
+            (swap! entities #(update-in % [entity-id :target] dissoc :id))
+            (let [{:keys [distance nx ny] } (destruct-vector position target-pos)]
+              (if (< distance marine-range)
+                (swap! entities #(update-in % [target-id :hp] (fn [cur-hp]
+                                                                (-> cur-hp
+                                                                    (- (-> delta
+                                                                           (/ 1000)
+                                                                           (* 5)))
+                                                                    (max 0)))))
+                (swap! entities #(update-in % [entity-id :target]
+                                            (fn [old]
+                                              (merge old {:x (-> distance
+                                                                 (- marine-range)
+                                                                 (+ 10)
+                                                                 (* nx)
+                                                                 (+ x))
+                                                          :y (-> distance
+                                                                 (- marine-range)
+                                                                 (+ 10)
+                                                                 (* ny)
+                                                                 (+ y))})))))))
+          (when-let [targets (->> @entities
+                                  (filter #(> marine-auto-range
+                                              (-> %
+                                                  second
+                                                  :position
+                                                  (destruct-vector position)
+                                                  :distance)))
+                                  (filter #(< 0 (-> % second :hp)))
+                                  (filter #(not= user (-> % second :user))))]
+            (when-let [target (first targets)]
+              (swap! entities
+                     #(update-in % [entity-id :target] assoc :id (first target))))))))))
