@@ -69,19 +69,22 @@
     (util/interpolate-entities (- time prev-time) state-entities))
   (reset! current-time time))
 
+(defn network-loop-handler [channel]
+  (go
+    (>! channel {:command :ping})
+    (let [message (-> channel <! :message)
+          minerals (:minerals message)
+          entities (:entities message)]
+      (when minerals
+        (reset! state-minerals minerals))
+      (when entities
+        (reset! state-entities entities)))))
+
 (defn core-loop [channel]
   (js/requestAnimationFrame
    (fn [time]
      (core-loop-handler time)
-     (go
-       (>! channel {:command :ping})
-       (let [message (-> channel <! :message)
-             minerals (:minerals message)
-             entities (:entities message)]
-         (when minerals
-           (reset! state-minerals minerals))
-         (when entities
-           (reset! state-entities entities))))
+     (network-loop-handler channel)
      (core-loop channel))))
 
 (defn login [username]
