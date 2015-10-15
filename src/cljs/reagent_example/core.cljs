@@ -24,7 +24,7 @@
   (get-in @state-entities [entity :type]))
 
 (defn select [entity]
-  (let [type (entity-type entity)
+  (let [{:keys [hp type]} (@state-entities entity)
         not-same-type (some #(not= type (entity-type %)) @state-selected)
         selected-count (count @state-selected)
         select-all (and (= selected-count 1) (= (first @state-selected) entity))
@@ -33,11 +33,13 @@
       (reset! state-selected (->> @state-entities
                                   (filter #(= @state-user (-> % second :user)))
                                   (filter #(= type (-> % second :type)))
+                                  (filter #(> (-> % second :hp) 0))
                                   (map first)
                                   set))
       (when deselect-all
-        (reset! state-selected #{}))))
-  (swap! state-selected #(conj % entity)))
+        (reset! state-selected #{})))
+    (when (> hp 0)
+      (swap! state-selected #(conj % entity)))))
 
 (defn execute-command [entity command & {:as params}]
   (go
