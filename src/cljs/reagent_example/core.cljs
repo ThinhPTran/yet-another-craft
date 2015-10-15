@@ -39,23 +39,23 @@
         (reset! state-selected #{}))))
   (swap! state-selected #(conj % entity)))
 
-(defn command [entity command & {:as params}]
+(defn execute-command [entity command & {:as params}]
   (go
     (>! @state-channel (merge {:command command :entity entity} params))
     (<! @state-channel)))
 
 (defn attack [target]
   (doseq [e @state-selected]
-    (command e :attack, :target target)))
+    (execute-command e :attack, :target target)))
 
 (defn move [pos]
   (doseq [e @state-selected]
     (let [rpos (util/select-spawn-target pos {:x 0 :y 0})]
-      (command e :move, :x (rpos :x), :y (rpos :y)))))
+      (execute-command e :move, :x (rpos :x), :y (rpos :y)))))
 
 (defn mount-root []
   (r/render [view/game-page
-             move attack select command
+             move attack select execute-command
              state-map state-entities state-minerals state-selected state-user]
             (.getElementById js/document "app")))
 
