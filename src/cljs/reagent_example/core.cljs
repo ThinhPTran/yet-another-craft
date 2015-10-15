@@ -3,6 +3,7 @@
             [reagent.session :as session]
             [secretary.core :as secretary :include-macros true]
             [reagent-example.util :as util]
+            [reagent-example.client :as client]
             [reagent-example.view :as view]
             [chord.client :as chord]
             [cljs.core.async :refer [<! >!]])
@@ -83,18 +84,6 @@
            (reset! state-entities entities))))
      (core-loop channel))))
 
-(defn look-at
-  ([{:keys [x y]}]
-   (.scrollTo js/window (- x 128) (- y 128))))
-
-(defn setup-camera [username]
-  (when-let [look-pos (->> @state-entities
-                           (filter #(= username (-> % second :user)))
-                           first
-                           second
-                           :position)]
-    (look-at look-pos)))
-
 (defn login [username]
   (go
     (let [ws-url (util/socket-url (-> js/window .-location .-hostname) username)
@@ -107,7 +96,7 @@
             (reset! state-minerals (:minerals message))
             (reset! state-user username)
             (mount-root)
-            (setup-camera username)
+            (client/setup-camera username @state-entities)
             (core-loop ws-channel))
         (js/console.log error)))))
 
