@@ -18,3 +18,4 @@ pom.xml.asc
 /resources/public/.DS_Store
 /src/clj/.DS_Store
 /resources/public/img/.DS_Store
+/resources/public/css/site.min.css
