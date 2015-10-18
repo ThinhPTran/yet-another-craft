@@ -45,23 +45,23 @@
 
   :minify-assets
   {:assets
-   {"resources/public/css/site.min.css" "resources/public/css/site.css"}}
+   {"resources/yet-another-craft/css/site.min.css" "resources/yet-another-craft/css/site.css"}}
 
   :cljsbuild {:builds {:app {:source-paths ["src/cljs" "src/cljc"]
-                             :compiler {:output-to     "resources/public/js/app.js"
-                                        :output-dir    "resources/public/js/out"
+                             :compiler {:output-to     "resources/yet-another-craft/js/app.js"
+                                        :output-dir    "resources/yet-another-craft/js/out"
                                         :asset-path   "js/out"
                                         :optimizations :none
                                         :pretty-print  true}}}}
 
-  :figwheel {:http-server-root "public"
+  :figwheel {:http-server-root "yet-another-craft"
              :websocket-host "localhost"
              :server-port 3000
              :nrepl-port 7002
              :nrepl-middleware ["cider.nrepl/cider-middleware"
                                 "refactor-nrepl.middleware/wrap-refactor"
                                 "cemerick.piggieback/wrap-cljs-repl"]
-             :css-dirs ["resources/public/css"]
+             :css-dirs ["resources/yet-another-craft/css"]
              :ring-handler reagent-example.handler/app
              }
 
