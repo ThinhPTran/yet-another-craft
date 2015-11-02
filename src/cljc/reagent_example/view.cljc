@@ -1,5 +1,5 @@
-(ns reagent-example.view
-  (:require [reagent-example.util :as util]))
+(ns yet-another-craft.view
+  (:require [yet-another-craft.util :as util]))
 
 (defn hp-bar [hp-width]
   [:div.hp-bar {:style {:width hp-width}}])

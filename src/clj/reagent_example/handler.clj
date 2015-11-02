@@ -1,4 +1,4 @@
-(ns reagent-example.handler
+(ns yet-another-craft.handler
   (:require [compojure.core :refer [GET defroutes]]
             [compojure.route :refer [not-found resources]]
             [org.httpkit.server :refer [with-channel on-close on-receive send!]]
@@ -8,7 +8,7 @@
             [hiccup.core :refer [html]]
             [hiccup.page :refer [include-js include-css]]
             [environ.core :refer [env]]
-            [reagent-example.util :as util]
+            [yet-another-craft.util :as util]
             [clojure.tools.reader :as reader]
             [clojure.core.async :refer [go]]))
 

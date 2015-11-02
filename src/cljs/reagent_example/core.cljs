@@ -1,10 +1,10 @@
-(ns reagent-example.core
+(ns yet-another-craft.core
   (:require [reagent.core :as r]
             [reagent.session :as session]
             [secretary.core :as secretary :include-macros true]
-            [reagent-example.util :as util]
-            [reagent-example.client :as client]
-            [reagent-example.view :as view]
+            [yet-another-craft.util :as util]
+            [yet-another-craft.client :as client]
+            [yet-another-craft.view :as view]
             [chord.client :as chord]
             [cljs.core.async :refer [<! >!]])
   (:require-macros [cljs.core.async.macros :refer [go]]))

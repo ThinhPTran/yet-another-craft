@@ -1,5 +1,5 @@
-(ns ^:figwheel-no-load reagent-example.dev
-  (:require [reagent-example.core :as core]
+(ns ^:figwheel-no-load yet-another-craft.dev
+  (:require [yet-another-craft.core :as core]
             [figwheel.client :as figwheel :include-macros true]))
 
 (enable-console-print!)

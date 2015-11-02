@@ -1,1 +1,1 @@
-web: java $JVM_OPTS -cp target/reagent-example.jar clojure.main -m reagent-example.server
+web: java $JVM_OPTS -cp target/yet-another-craft.jar clojure.main -m yet-another-craft.server

@@ -1,4 +1,4 @@
-(ns reagent-example.client)
+(ns yet-another-craft.client)
 
 (defn look-at
   ([{:keys [x y]}]

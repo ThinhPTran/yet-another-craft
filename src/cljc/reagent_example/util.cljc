@@ -1,4 +1,4 @@
-(ns reagent-example.util)
+(ns yet-another-craft.util)
 
 (def harvest-power 1)
 (def tile-size 64)
@@ -138,16 +138,16 @@
                                                                  (* ny)
                                                                  (+ y))})))))))
           (when-not (or move-x move-y)
-              (when-let [targets (->> @entities
-                                      (filter #(> marine-auto-range
-                                                  (-> %
-                                                      second
-                                                      :position
-                                                      (destruct-vector position)
-                                                      :distance)))
-                                      (filter #(< 0 (-> % second :hp)))
-                                      (filter #(not= user (-> % second :user))))]
-                (when-let [target (first targets)]
-                  (swap! entities
-                         #(update-in % [entity-id :target]
-                                     assoc :id (first target)))))))))))
+            (when-let [targets (->> @entities
+                                    (filter #(> marine-auto-range
+                                                (-> %
+                                                    second
+                                                    :position
+                                                    (destruct-vector position)
+                                                    :distance)))
+                                    (filter #(< 0 (-> % second :hp)))
+                                    (filter #(not= user (-> % second :user))))]
+              (when-let [target (first targets)]
+                (swap! entities
+                       #(update-in % [entity-id :target]
+                                   assoc :id (first target)))))))))))
