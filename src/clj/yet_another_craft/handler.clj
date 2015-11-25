@@ -21,6 +21,8 @@
     (reset! entities {})
     (reset! users {})
     (reset! minerals {})
+    (->> (vals @entities)
+         (map :dead-for-ms))
     )
   )
 
@@ -129,7 +131,12 @@
   (when-let [prev-time @current-time]
     (let [delta (- time prev-time)]
       (util/interpolate-entities delta entities)
-      (util/process-ai delta entities)))
+      (util/process-ai delta entities))
+    (let [dead-entities (->> @entities
+                             (filter #(> (or (:dead-for-ms (second %)) 0) 10000))
+                             (map first))]
+      (doseq [id dead-entities]
+        (swap! entities (fn [es] (dissoc es id))))))
   (reset! current-time time))
 
 (defonce core-loop

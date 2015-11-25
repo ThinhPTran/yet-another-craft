@@ -66,11 +66,14 @@
       nil)))
 
 (defn interpolate-entities [time entities]
-  (doseq [[id {{tx :x ty :y :as target} :target position :position}] @entities]
+  (doseq [[id {{tx :x ty :y :as target} :target position :position hp :hp}] @entities]
     (if (and tx ty)
       (if-let [pos (interpolate position target (* time marine-velocity))]
         (swap! entities (fn [es] (update-in es [id] #(merge % pos))))
-        (swap! entities #(update-in % [id :target] empty))))))
+        (swap! entities #(update-in % [id :target] empty))))
+    (if (= 0 hp)
+      (swap! entities (fn [es] (update-in es [id :dead-for-ms] #(+ (or % 0) time))))
+      (swap! entities (fn [es] (update-in es [id :dead-for-ms] (fn [_] 0)))))))
 
 (defn marine-style [hp angle-id]
   (cond
