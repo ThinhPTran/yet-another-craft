@@ -6,7 +6,7 @@ Units:
 - attack
 - move
 
-Command center
+Command center:
 - meta harvest
 - meta repair
 - build marine
