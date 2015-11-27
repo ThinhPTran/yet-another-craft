@@ -82,8 +82,11 @@
 (defn marine [username entity]
   (println "marine")
   (let [pos (get-in @entities [entity :position])
-        resources(get-in @minerals [username])]
-    (when (and pos resources (>= resources util/marine-cost))
+        resources(get-in @minerals [username])
+        user-entities (->> @entities
+                           (map second)
+                           (filter #(= (:user %) username)))]
+    (when (and pos resources (>= resources util/marine-cost) (< (count user-entities) 10))
       (swap! entities #(assoc % (util/gen-id) (util/make-marine username pos)))
       (swap! minerals #(update-in % [username] (fn [cur] (- cur util/marine-cost)))))))
 
