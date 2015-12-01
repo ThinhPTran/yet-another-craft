@@ -137,7 +137,7 @@
       (util/process-ai delta entities))
     (let [dead-entities (->> @entities
                              (filter #(> (or (:dead-for-ms (second %)) 0) 10000))
-                             (filter #(not= (:type %) :command-centre))
+                             (filter #(not= (:type (second %)) :command-centre))
                              (map first))]
       (doseq [id dead-entities]
         (swap! entities (fn [es] (dissoc es id))))))
