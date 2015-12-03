@@ -5,26 +5,35 @@
   [:div.hp-bar {:style {:width hp-width}}])
 
 (defn selection [selected width height]
-  [:div.selection {:style {:display (if selected "initial" "none")
-                           :width width
-                           :height height}}])
+  [:div.selection {:style {:display        (if selected "initial" "none")
+                           :z-index        3
+                           :pointer-events :none
+                           :width          width
+                           :height         height}}])
 
 (defn commands-list [entity commands selected execute-command]
   [:div.commands {:style {:display (if selected "initial" "none")}}
    (for [command commands]
-     ^{:key command } [:div {:class (str "command-" (name command))
+     ^{:key command } [:div {:class    (str "command-" (name command))
+                             :style    {:z-index        4}
                              :on-click #(execute-command entity command)}])])
 
 (defn resources [selected type
                  state-minerals]
   (if (and selected (= type :command-centre))
-    [:div.resources "minerals : " @state-minerals]))
+    [:div.resources {:style {:z-index        4
+                             :pointer-events :none}}
+     "minerals : " @state-minerals]))
 
 (defn username [user width height]
-  [:div.username {:style {:width width :height height}} user])
+  [:div.username {:style {:width          width
+                          :height         height
+                          :pointer-events :none
+                          :z-index        4}}
+   user])
 
 (defn entity [id data current-user
-              attack select execute-command
+              attack select execute-command move
               state-selected state-minerals]
   (let [width (-> data :size :x)
         height (-> data :size :y)
@@ -47,16 +56,18 @@
      [resources selected type state-minerals]
      [:div {:class (util/state-styles hp type angle)
             :style {:z-index (if (= 0 hp) 0 z-order)}
-            :on-click #(if (= user current-user) (select id) (attack id))}]]))
+            :on-click #(if (= hp 0)
+                         (move %)
+                         (if (= user current-user) (select id) (attack id)))}]]))
 
-(defn entities [attack select execute-command
+(defn entities [attack select execute-command move
                 state-entities state-user state-selected state-minerals]
   (let [entities @state-entities
         current-user @state-user]
     [:div (for [[id data] entities]
             ^{:key id} [entity
                         id data current-user
-                        attack select execute-command
+                        attack select execute-command move
                         state-selected state-minerals])]))
 
 (defn game-map [move state-map]
@@ -70,5 +81,5 @@
   [:div.game-page
    [game-map move state-map]
    [entities
-    attack select execute-command
+    attack select execute-command move
     state-entities state-user state-selected state-minerals]])
