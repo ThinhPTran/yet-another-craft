@@ -15,26 +15,28 @@
    (distort-point pos {:x 0 :y 0})))
 
 (defn make-marine [user {:keys [x y] :as pos}]
-  {:hp 15
-   :max-hp 15
+  {:hp       15
+   :z-order  2
+   :max-hp   15
    :position {:x x :y y}
-   :angle (rand 360)
-   :size {:x 64 :y 64}
-   :type :marine
+   :angle    (rand 360)
+   :size     {:x 64 :y 64}
+   :type     :marine
    :commands #{}
-   :target (distort-point pos {:x -64 :y -64})
-   :user user})
+   :target   (distort-point pos {:x -64 :y -64})
+   :user     user})
 
 (defn make-command-centre [user {:keys [x y]}]
-  {:hp 250
-   :max-hp 300
-   :position  {:x x :y y}
-   :angle 0
-   :size {:x 120 :y 120}
-   :type :command-centre
+  {:hp       250
+   :z-order  1
+   :max-hp   300
+   :position {:x x :y y}
+   :angle    0
+   :size     {:x 120 :y 120}
+   :type     :command-centre
    :commands #{:harvest :marine :repair}
-   :target {}
-   :user user})
+   :target   {}
+   :user     user})
 
 (defn make-map []
   {:name "blood-bath"

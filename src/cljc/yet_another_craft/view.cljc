@@ -37,7 +37,8 @@
         selected (@state-selected id)
         type (data :type)
         user (data :user)
-        commands (data :commands)]
+        commands (data :commands)
+        z-order (data :z-order)]
     [:div.entity {:style {:width width, :height height, :left x, :top y}}
      [username user width height]
      [hp-bar hp-width]
@@ -45,6 +46,7 @@
      [commands-list id commands selected execute-command]
      [resources selected type state-minerals]
      [:div {:class (util/state-styles hp type angle)
+            :style {:z-index (if (= 0 hp) 0 z-order)}
             :on-click #(if (= user current-user) (select id) (attack id))}]]))
 
 (defn entities [attack select execute-command
