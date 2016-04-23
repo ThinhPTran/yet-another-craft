@@ -8,6 +8,7 @@
             [hiccup.core :refer [html]]
             [hiccup.page :refer [include-js include-css]]
             [environ.core :refer [env]]
+            [taoensso.timbre :as timbre]
             [yet-another-craft.util :as util]
             [clojure.tools.reader :as reader]
             [clojure.core.async :refer [go]]))
@@ -64,14 +65,14 @@
 
 (defn remove-channel [channel]
   (swap! users #(dissoc % channel))
-  (println "socket closed"))
+  (timbre/debug "socket closed"))
 
 (defn harvest [username value]
-  (println "harvest")
+  (timbre/debug "harvest")
   (swap! minerals (fn [m] (update-in m [username] (partial + value)))))
 
 (defn repair [username entity]
-  (println "repair")
+  (timbre/debug "repair")
   (let [{:keys [hp max-hp]} (@entities entity)
         resources (@minerals username)]
     (if (and (< hp max-hp) (> resources 0))
@@ -80,7 +81,7 @@
         (swap! entities (fn [e] (update-in e [entity :hp] inc)))))))
 
 (defn marine [username entity]
-  (println "marine")
+  (timbre/debug "marine")
   (let [pos (get-in @entities [entity :position])
         resources(get-in @minerals [username])
         user-entities (->> @entities
@@ -91,11 +92,11 @@
       (swap! minerals #(update-in % [username] (fn [cur] (- cur util/marine-cost)))))))
 
 (defn attack [username entity target]
-  (println "attack")
+  (timbre/debug "attack")
   (swap! entities #(update-in % [entity :target] (fn [old] {:id target}))))
 
 (defn move [username entity x y]
-  (println "move")
+  (timbre/debug "move")
   (swap! entities #(update-in % [entity :target] (fn [old] {:x x :y y}))))
 
 (defn handle-commands [username {:keys [command entity x y target] :as msg}]
@@ -111,8 +112,8 @@
 (defn web-socket-handler [req]
   (with-channel req channel
     (let [username (get-in req [:params :name])]
-      (println "socket opened for user ")
-      (println username)
+      (timbre/debug "socket opened for user ")
+      (timbre/debug username)
       (add-channel channel username)
       (send! channel (pr-str (get-channel-state-initial channel)))
       (on-close channel (fn [status] (remove-channel channel)))

@@ -5,6 +5,7 @@
             [yet-another-craft.util :as util]
             [yet-another-craft.client :as client]
             [yet-another-craft.view :as view]
+            [taoensso.timbre :as timbre]
             [chord.client :as chord]
             [cljs.core.async :refer [<! >!]])
   (:require-macros [cljs.core.async.macros :refer [go]]))
@@ -100,7 +101,7 @@
             (mount-root)
             (client/setup-camera username @state-entities)
             (core-loop ws-channel))
-        (js/console.log error)))))
+        (timbre/debug error)))))
 
 (secretary/set-config! :prefix "#")
 

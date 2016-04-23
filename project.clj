@@ -21,7 +21,8 @@
                  [secretary "1.2.3"]
                  [jarohen/chord "0.6.0"]
                  [org.clojure/tools.reader "0.10.0"]
-                 [secretary "1.2.3"]]
+                 [secretary "1.2.3"]
+                 [com.taoensso/timbre "4.3.1"]]
 
   :plugins [[lein-environ "1.0.1"]
             [refactor-nrepl "2.3.0-SNAPSHOT"]
