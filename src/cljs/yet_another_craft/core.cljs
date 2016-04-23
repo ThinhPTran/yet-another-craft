@@ -17,7 +17,6 @@
 (defonce state-channel (r/atom nil))
 
 (def current-time (r/atom 0))
-(def network-time (r/atom 0))
 
 ;; Commands
 
