@@ -24,9 +24,9 @@
                  [secretary "1.2.3"]]
 
   :plugins [[lein-environ "1.0.1"]
-            [refactor-nrepl "2.0.0-SNAPSHOT"]
+            [refactor-nrepl "2.3.0-SNAPSHOT"]
             [lein-asset-minifier "0.2.2"]
-            [cider/cider-nrepl "0.10.0-SNAPSHOT"]]
+            [cider/cider-nrepl "0.12.0"]]
 
   :ring {:handler yet-another-craft.handler/app
          :uberwar-name "yet-another-craft.war"}
