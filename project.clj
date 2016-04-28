@@ -50,11 +50,11 @@
    {"resources/public/css/site.min.css" "resources/public/css/site.css"}}
 
   :cljsbuild {:builds {:app {:source-paths ["src/cljs" "src/cljc"]
-                             :compiler {:output-to     "resources/public/js/app.js"
-                                        :output-dir    "resources/public/js/out"
-                                        :asset-path   "js/out"
+                             :compiler {:output-to "resources/public/js/app.js"
+                                        :output-dir"resources/public/js/out"
+                                        :asset-path "js/out"
                                         :optimizations :none
-                                        :pretty-print  true}}}}
+                                        :pretty-print true}}}}
 
   :figwheel {:http-server-root "public"
              :server-port 3000
@@ -63,8 +63,7 @@
                                 "refactor-nrepl.middleware/wrap-refactor"
                                 "cemerick.piggieback/wrap-cljs-repl"]
              :css-dirs ["resources/public/css"]
-             :ring-handler yet-another-craft.handler/app
-             }
+             :ring-handler yet-another-craft.handler/app}
 
   :profiles {:dev {:repl-options {:init-ns yet-another-craft.repl
                                   :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl
@@ -83,7 +82,7 @@
 
                    :dependencies [[ring/ring-mock "0.3.0"]
                                   [ring/ring-devel "1.4.0"]
-                                  [lein-figwheel "0.5.2"]
+                                  ;; [lein-figwheel "0.5.2"]
                                   [com.cemerick/piggieback "0.2.1"]
                                   [org.clojure/tools.nrepl "0.2.12"]
                                   [pjstadig/humane-test-output "0.8.0"]]
