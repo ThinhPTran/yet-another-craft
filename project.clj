@@ -24,9 +24,9 @@
                  [secretary "1.2.3"]
                  [com.taoensso/timbre "4.3.1"]]
 
-  :plugins [[lein-environ "1.0.1"]
+  :plugins [[lein-environ "1.0.2"]
             [refactor-nrepl "2.3.0-SNAPSHOT"]
-            [lein-asset-minifier "0.2.2"]
+            [lein-asset-minifier "0.2.8"]
             [cider/cider-nrepl "0.13.0-SNAPSHOT"]]
 
   :ring {:handler yet-another-craft.handler/app
@@ -87,7 +87,7 @@
 
                    :source-paths ["env/dev/clj"]
                    :plugins [[lein-figwheel "0.5.2"]
-                             [lein-cljsbuild "1.0.6"]]
+                             [lein-cljsbuild "1.1.3"]]
 
                    :injections [(require 'pjstadig.humane-test-output)
                                 (pjstadig.humane-test-output/activate!)]
