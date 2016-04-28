@@ -24,8 +24,7 @@
                  [secretary "1.2.3"]
                  [com.taoensso/timbre "4.3.1"]]
 
-  :plugins [[lein-ancient "0.6.10"]
-            [lein-environ "1.0.1"]
+  :plugins [[lein-environ "1.0.1"]
             [refactor-nrepl "2.3.0-SNAPSHOT"]
             [lein-asset-minifier "0.2.2"]
             [cider/cider-nrepl "0.13.0-SNAPSHOT"]]
