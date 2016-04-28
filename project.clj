@@ -51,7 +51,7 @@
 
   :cljsbuild {:builds {:app {:source-paths ["src/cljs" "src/cljc"]
                              :compiler {:output-to "resources/public/js/app.js"
-                                        :output-dir"resources/public/js/out"
+                                        :output-dir "resources/public/js/out"
                                         :asset-path "js/out"
                                         :optimizations :none
                                         :pretty-print true}}}}
@@ -82,7 +82,6 @@
 
                    :dependencies [[ring/ring-mock "0.3.0"]
                                   [ring/ring-devel "1.4.0"]
-                                  ;; [lein-figwheel "0.5.2"]
                                   [com.cemerick/piggieback "0.2.1"]
                                   [org.clojure/tools.nrepl "0.2.12"]
                                   [pjstadig/humane-test-output "0.8.0"]]
