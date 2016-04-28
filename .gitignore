@@ -1,6 +1,7 @@
 /target
 /classes
 /checkouts
+.DS_Store
 profiles.clj
 pom.xml
 pom.xml.asc
@@ -14,8 +15,4 @@ pom.xml.asc
 *.log
 /.env
 /.cljs_rhino_repl/
-/resources/.DS_Store
-/resources/public/.DS_Store
-/src/clj/.DS_Store
-/resources/public/img/.DS_Store
 /resources/public/css/site.min.css
