@@ -27,7 +27,7 @@
   :plugins [[lein-environ "1.0.1"]
             [refactor-nrepl "2.3.0-SNAPSHOT"]
             [lein-asset-minifier "0.2.2"]
-            [cider/cider-nrepl "0.12.0"]]
+            [cider/cider-nrepl "0.13.0-SNAPSHOT"]]
 
   :ring {:handler yet-another-craft.handler/app
          :uberwar-name "yet-another-craft.war"}
