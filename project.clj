@@ -4,8 +4,8 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
-  :dependencies [[org.clojure/clojure "1.7.0"]
-                 [org.clojure/clojurescript "1.7.145" :scope "provided"]
+  :dependencies [[org.clojure/clojure "1.8.0"]
+                 [org.clojure/clojurescript "1.8.51" :scope "provided"]
                  [org.clojure/core.async "0.2.371"]
                  [ring/ring-devel "1.4.0"]
                  [ring/ring-core "1.4.0"]
@@ -24,7 +24,8 @@
                  [secretary "1.2.3"]
                  [com.taoensso/timbre "4.3.1"]]
 
-  :plugins [[lein-environ "1.0.1"]
+  :plugins [[lein-ancient "0.6.10"]
+            [lein-environ "1.0.1"]
             [refactor-nrepl "2.3.0-SNAPSHOT"]
             [lein-asset-minifier "0.2.2"]
             [cider/cider-nrepl "0.13.0-SNAPSHOT"]]
@@ -56,7 +57,6 @@
                                         :pretty-print  true}}}}
 
   :figwheel {:http-server-root "public"
-             :websocket-host "localhost"
              :server-port 3000
              :nrepl-port 7002
              :nrepl-middleware ["cider.nrepl/cider-middleware"
@@ -83,13 +83,13 @@
 
                    :dependencies [[ring/ring-mock "0.3.0"]
                                   [ring/ring-devel "1.4.0"]
-                                  [lein-figwheel "0.4.1"]
+                                  [lein-figwheel "0.5.2"]
                                   [com.cemerick/piggieback "0.2.1"]
                                   [org.clojure/tools.nrepl "0.2.12"]
                                   [pjstadig/humane-test-output "0.7.0"]]
 
                    :source-paths ["env/dev/clj"]
-                   :plugins [[lein-figwheel "0.4.1"]
+                   :plugins [[lein-figwheel "0.5.2"]
                              [lein-cljsbuild "1.0.6"]]
 
                    :injections [(require 'pjstadig.humane-test-output)
