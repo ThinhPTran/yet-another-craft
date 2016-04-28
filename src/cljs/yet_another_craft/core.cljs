@@ -1,5 +1,6 @@
 (ns yet-another-craft.core
   (:require [reagent.core :as r]
+            [taoensso.timbre :as timbre]
             [reagent.session :as session]
             [secretary.core :as secretary :include-macros true]
             [yet-another-craft.util :as util]
@@ -109,5 +110,5 @@
   (login name))
 
 (defn init! []
-  (println "started")
+  (timbre/debug "started")
   (secretary/dispatch! (-> js/window .-location .-pathname)))
