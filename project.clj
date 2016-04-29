@@ -11,7 +11,7 @@
                  [ring/ring-core "1.4.0"]
                  [ring/ring-defaults "0.2.0"]
                  [http-kit "2.1.19"]
-                 [reagent "0.5.1"]
+                 [reagent "0.6.0-SNAPSHOT"]
                  [reagent-forms "0.5.23"]
                  [reagent-utils "0.1.8"]
                  [prone "1.1.1"]
