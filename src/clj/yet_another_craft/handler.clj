@@ -11,11 +11,9 @@
             [taoensso.timbre :as timbre]
             [yet-another-craft.util :as util]
             [clojure.tools.reader :as reader]
-            [clojure.core.async :refer [go]]))
-
-(defonce entities (atom {}))
-(defonce users (atom {}))
-(defonce minerals (atom {}))
+            [clojure.core.async :refer [go]]
+            [yet-another-craft.state :refer [entities users minerals]]
+            [mount.core :refer [defstate]]))
 
 (comment
   (do
@@ -122,7 +120,9 @@
                             (send! channel (pr-str (get-channel-state channel))))))))
 
 (defroutes routes
-  (GET "/:name" [] home-page)
+  (GET "/:name" [] (fn [_]
+                     (println "homepage")
+                     home-page))
   (GET "/ws/:name" [] web-socket-handler)
   (resources "/")
   (not-found "Not Found"))
@@ -144,8 +144,7 @@
         (swap! entities (fn [es] (dissoc es id))))))
   (reset! current-time time))
 
-(defonce core-loop
-  (go
-    (loop []
-      (core-loop-handler (System/currentTimeMillis))
-      (recur))))
+(defstate core-loop :start (go
+                             (loop []
+                               (core-loop-handler (System/currentTimeMillis))
+                               (recur))))

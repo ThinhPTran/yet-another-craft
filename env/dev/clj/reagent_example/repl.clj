@@ -1,7 +1,8 @@
 (ns yet-another-craft.repl
   (:use yet-another-craft.handler
         [org.httpkit.server :refer [run-server]]
-        [ring.middleware file-info file]))
+        [ring.middleware file-info file]
+        [mount.core :refer [start]]))
 
 (defonce server (atom nil))
 
@@ -19,6 +20,7 @@
 (defn start-server
   "used for starting the server in development mode from REPL"
   [& [port]]
+  (start)
   (let [port (if port (Integer/parseInt port) 3000)]
     (reset! server
             (run-server (get-handler)
